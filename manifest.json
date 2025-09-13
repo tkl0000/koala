@@ -5,7 +5,12 @@
   "description": "A Chrome extension built with React",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -22,7 +27,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/*"],
+      "resources": ["assets/*", "custom-page.html", "custom-page.js"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -1,5 +1,11 @@
 // Background script for Koala Chrome Extension
 
+// Configuration for URL interception
+const INTERCEPT_CONFIG = {
+  targetWebsite: 'https://example.com', // Change this to your target website
+  enabled: true // Toggle to enable/disable interception
+};
+
 // Extension installation/update handler
 chrome.runtime.onInstalled.addListener((details) => {
   console.log('Koala Extension installed/updated:', details.reason);
@@ -10,9 +16,66 @@ chrome.runtime.onInstalled.addListener((details) => {
     settings: {
       theme: 'light',
       notifications: true
-    }
+    },
+    interceptConfig: INTERCEPT_CONFIG
   });
+
+  // Set up web request listener
+  setupWebRequestListener();
 });
+
+// Function to set up web request listener
+function setupWebRequestListener() {
+  // Remove existing listener if any
+  if (chrome.webRequest.onBeforeRequest.hasListener(handleWebRequest)) {
+    chrome.webRequest.onBeforeRequest.removeListener(handleWebRequest);
+  }
+
+  // Add new listener
+  chrome.webRequest.onBeforeRequest.addListener(
+    handleWebRequest,
+    { urls: ["<all_urls>"] },
+    ["blocking"]
+  );
+}
+
+// Handle web requests and redirect if needed
+function handleWebRequest(details) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(['interceptConfig'], (result) => {
+      const config = result.interceptConfig || INTERCEPT_CONFIG;
+      
+      if (!config.enabled) {
+        resolve({ cancel: false });
+        return;
+      }
+
+      const targetUrl = config.targetWebsite;
+      
+      // Check if the request is for our target website
+      if (details.url.includes(targetUrl) || details.url === targetUrl) {
+        console.log(`Intercepting request to: ${details.url}`);
+        
+        // Get the extension's custom page URL
+        const customPageUrl = chrome.runtime.getURL('custom-page.html');
+        const finalUrl = `${customPageUrl}?original=${encodeURIComponent(details.url)}`;
+        
+        console.log(`Redirecting to custom React page: ${finalUrl}`);
+        
+        // Redirect the tab to our custom React page
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]) {
+            chrome.tabs.update(tabs[0].id, { url: finalUrl });
+          }
+        });
+        
+        resolve({ cancel: true });
+      } else {
+        resolve({ cancel: false });
+      }
+    });
+  });
+}
 
 // Handle messages from popup and content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -52,6 +115,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       });
       break;
+
+    case 'updateInterceptConfig':
+      // Update interception configuration
+      chrome.storage.sync.set({ interceptConfig: message.config }, () => {
+        setupWebRequestListener(); // Re-setup listener with new config
+        sendResponse({ success: true });
+      });
+      return true;
+
+    case 'getInterceptConfig':
+      // Get current interception configuration
+      chrome.storage.sync.get(['interceptConfig'], (result) => {
+        sendResponse({ config: result.interceptConfig || INTERCEPT_CONFIG });
+      });
+      return true;
       
     default:
       console.log('Unknown action:', message.action);
