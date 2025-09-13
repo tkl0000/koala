@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { GoogleGenAI } from "@google/genai";
+
 import './custom-page.css';
 
 const CustomPage = () => {
@@ -6,6 +8,10 @@ const CustomPage = () => {
   const [time, setTime] = useState(new Date());
   const [flashcard, setFlashcard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [userAnswer, setUserAnswer] = useState('');
+  const [isGrading, setIsGrading] = useState(false);
+  const [gradeResult, setGradeResult] = useState(null);
+  const [showAnswerInput, setShowAnswerInput] = useState(false);
 
   useEffect(() => {
     // Get the original URL from URL parameters
@@ -55,8 +61,110 @@ const CustomPage = () => {
         const randomIndex = Math.floor(Math.random() * flashcards.length);
         setFlashcard(flashcards[randomIndex]);
         setIsFlipped(false); // Reset flip state for new card
+        setUserAnswer(''); // Reset user answer
+        setGradeResult(null); // Reset grade result
+        setShowAnswerInput(false); // Reset answer input visibility
       }
     });
+  };
+
+  const handleShowAnswerInput = () => {
+    setShowAnswerInput(true);
+    setGradeResult(null);
+  };
+
+  const gradeAnswer = async () => {
+    if (!userAnswer.trim()) {
+      alert('Please enter an answer before grading');
+      return;
+    }
+
+    setIsGrading(true);
+    
+    try {
+      // Get API key from storage
+      const result = await chrome.storage.sync.get(['geminiApiKey']);
+      const apiKey = result.geminiApiKey;
+      
+      if (!apiKey) {
+        alert('Please set your Gemini API key in the dashboard first');
+        setIsGrading(false);
+        return;
+      }
+
+      const ai = new GoogleGenAI({});
+
+      const prompt = `You are a helpful tutor grading a student's answer. Please grade the following:
+
+Question: "${flashcard.front}"
+Correct Answer: "${flashcard.back}"
+Student's Answer: "${userAnswer}"
+
+Please provide:
+1. A grade (A, B, C, D, or F)
+2. A brief explanation of why this grade was given
+3. Constructive feedback to help the student improve
+
+Format your response as:
+Grade: [A/B/C/D/F]
+Explanation: [Brief explanation]
+Feedback: [Constructive feedback]`;
+      // console.log('Key:', apiKey);
+      // console.log(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`);
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: "Explain how AI works in a few words",
+      });
+      console.log(response.text);
+      // const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     contents: [{
+      //       parts: [{
+      //         text: prompt
+      //       }]
+      //     }]
+      //   })
+      // });
+      // if (!response.ok) {
+      //   throw new Error(`API request failed: ${response.status}`);
+      // }
+      // const data = await response.json();
+      const generatedText = response.text;
+      
+      // Parse the response
+      const gradeMatch = generatedText.match(/Grade:\s*([A-F])/i);
+      const explanationMatch = generatedText.match(/Explanation:\s*([^\n]+)/i);
+      const feedbackMatch = generatedText.match(/Feedback:\s*([^\n]+)/i);
+      
+      setGradeResult({
+        grade: gradeMatch ? gradeMatch[1].toUpperCase() : 'N/A',
+        explanation: explanationMatch ? explanationMatch[1] : 'No explanation provided',
+        feedback: feedbackMatch ? feedbackMatch[1] : 'No feedback provided',
+        fullResponse: generatedText
+      });
+
+    } catch (error) {
+      console.error('Error grading answer:', error);
+      setGradeResult({
+        grade: 'Error',
+        explanation: 'Failed to grade answer',
+        feedback: 'Please check your API key and try again',
+        fullResponse: error.message
+      });
+    } finally {
+      setIsGrading(false);
+    }
+  };
+
+  const resetCard = () => {
+    setUserAnswer('');
+    setGradeResult(null);
+    setShowAnswerInput(false);
+    setIsFlipped(false);
   };
 
   const handleGoBack = () => {
@@ -108,10 +216,57 @@ const CustomPage = () => {
                 <button onClick={handleFlip} className="flashcard-btn">
                   {isFlipped ? 'Show Front' : 'Show Back'}
                 </button>
+                <button onClick={handleShowAnswerInput} className="flashcard-btn secondary">
+                  Try Answer
+                </button>
                 <button onClick={handleNextCard} className="flashcard-btn secondary">
                   Next Card
                 </button>
               </div>
+
+              {showAnswerInput && (
+                <div className="answer-input-section">
+                  <h4>Enter Your Answer:</h4>
+                  <textarea
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Type your answer here..."
+                    className="answer-input"
+                    rows="3"
+                  />
+                  <div className="answer-controls">
+                    <button 
+                      onClick={gradeAnswer} 
+                      className="grade-btn"
+                      disabled={isGrading}
+                    >
+                      {isGrading ? 'Grading...' : 'Grade Answer'}
+                    </button>
+                    <button onClick={resetCard} className="reset-btn">
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {gradeResult && (
+                <div className="grade-result">
+                  <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
+                    Grade: {gradeResult.grade}
+                  </div>
+                  <div className="grade-details">
+                    <div className="grade-explanation">
+                      <strong>Explanation:</strong> {gradeResult.explanation}
+                    </div>
+                    <div className="grade-feedback">
+                      <strong>Feedback:</strong> {gradeResult.feedback}
+                    </div>
+                  </div>
+                  <button onClick={resetCard} className="try-again-btn">
+                    Try Again
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

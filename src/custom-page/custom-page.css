@@ -279,6 +279,177 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
+/* Answer input and grading styles */
+.answer-input-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.answer-input-section h4 {
+  margin: 0 0 15px 0;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.answer-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.answer-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.answer-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.answer-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.grade-btn {
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.grade-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+}
+
+.grade-btn:disabled {
+  background: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.reset-btn {
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.grade-result {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.grade-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  text-align: center;
+  min-width: 80px;
+}
+
+.grade-a {
+  background: #4CAF50;
+  color: white;
+}
+
+.grade-b {
+  background: #8BC34A;
+  color: white;
+}
+
+.grade-c {
+  background: #FFC107;
+  color: #333;
+}
+
+.grade-d {
+  background: #FF9800;
+  color: white;
+}
+
+.grade-f {
+  background: #f44336;
+  color: white;
+}
+
+.grade-error {
+  background: #666;
+  color: white;
+}
+
+.grade-details {
+  margin-bottom: 15px;
+}
+
+.grade-explanation,
+.grade-feedback {
+  margin-bottom: 10px;
+  color: white;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.grade-explanation strong,
+.grade-feedback strong {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.try-again-btn {
+  padding: 10px 20px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.try-again-btn:hover {
+  background: #1976D2;
+  transform: translateY(-1px);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .custom-header h1 {

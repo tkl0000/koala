@@ -8,7 +8,11 @@
     "dev": "webpack --mode=development --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": ["chrome-extension", "react", "webpack"],
+  "keywords": [
+    "chrome-extension",
+    "react",
+    "webpack"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
@@ -24,6 +28,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@google/genai": "^1.19.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
