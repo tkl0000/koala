@@ -140,6 +140,99 @@ const Dashboard = () => {
     reader.readAsText(file);
   };
 
+  const parseCSV = (csvText) => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    const flashcards = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      // Handle CSV parsing with proper quote handling
+      const columns = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          columns.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      columns.push(current.trim());
+      
+      // Remove quotes from the beginning and end of each column
+      const cleanColumns = columns.map(col => 
+        col.replace(/^"(.*)"$/, '$1').trim()
+      );
+      
+      if (cleanColumns.length >= 2) {
+        const front = cleanColumns[0];
+        const back = cleanColumns[1];
+        const category = cleanColumns[2] || 'Imported';
+        
+        if (front && back) {
+          flashcards.push({
+            id: Date.now() + i, // Ensure unique IDs
+            front: front,
+            back: back,
+            category: category
+          });
+        }
+      }
+    }
+    
+    return flashcards;
+  };
+
+  const importFlashcardsCSV = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      alert('Please select a CSV file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvText = e.target.result;
+        const importedFlashcards = parseCSV(csvText);
+        
+        if (importedFlashcards.length === 0) {
+          alert('No valid flashcards found in the CSV file. Please check the format.');
+          return;
+        }
+        
+        // Merge with existing flashcards
+        const updatedFlashcards = [...flashcards, ...importedFlashcards];
+        setFlashcards(updatedFlashcards);
+        
+        chrome.storage.sync.set({ flashcards: updatedFlashcards }, () => {
+          console.log(`Successfully imported ${importedFlashcards.length} flashcards from CSV`);
+          alert(`Successfully imported ${importedFlashcards.length} flashcards from CSV!`);
+        });
+        
+        // Reset file input
+        event.target.value = '';
+        
+      } catch (error) {
+        console.error('Error importing flashcards:', error);
+        alert('Error importing flashcards. Please check the CSV format.');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
   const addFlashcard = () => {
     if (!newFlashcard.front.trim() || !newFlashcard.back.trim()) {
       alert('Please fill in both front and back of the flashcard');
@@ -282,10 +375,26 @@ const Dashboard = () => {
         <div className="flashcards-section">
           <div className="section-header">
             <h2>📚 Flashcards ({flashcards.length})</h2>
+            <div className="section-actions">
+              <label className="action-btn secondary">
+                📥 Import CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={importFlashcardsCSV}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
           </div>
 
           <div className="add-flashcard-section">
             <h3>Add New Flashcard</h3>
+            <div className="csv-import-info">
+              <p><strong>CSV Import:</strong> Upload a CSV file with format: <code>front,back,category</code></p>
+              <p>Example: <code>"What is the capital of France?","Paris","Geography"</code></p>
+              <p>Supports Quizlet exports and other CSV formats with question/answer pairs.</p>
+            </div>
             <div className="flashcard-form">
               <div className="form-group">
                 <label>Front (Question):</label>

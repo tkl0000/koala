@@ -582,3 +582,34 @@
     align-self: stretch;
   }
 }
+
+/* CSV Import Info Styling */
+.csv-import-info {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  backdrop-filter: blur(10px);
+}
+
+.csv-import-info p {
+  margin: 0 0 8px 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.csv-import-info p:last-child {
+  margin-bottom: 0;
+}
+
+.csv-import-info code {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  color: #ffd700;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
