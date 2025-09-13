@@ -4,21 +4,48 @@
   width: 300px;
   min-height: 400px;
   font-family: var(--font-family);
-  background: var(--primary-gradient);
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all var(--transition-theme);
 }
 
 .header {
-  padding: 20px;
+  padding: var(--spacing-xl);
   text-align: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
+  transition: all var(--transition-theme);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .header h1 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dark-mode-toggle {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  backdrop-filter: blur(10px);
+}
+
+.dark-mode-toggle:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
 }
 
 .content {
@@ -103,11 +130,12 @@
 
 /* Stats section styles */
 .stats-section {
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: var(--spacing-xl);
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-theme);
 }
 
 .stats-section h3 {
@@ -156,12 +184,13 @@
 
 /* Extension toggle section */
 .extension-toggle-section {
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: var(--spacing-xl);
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
   text-align: center;
+  transition: all var(--transition-theme);
 }
 
 .toggle-container {
@@ -207,7 +236,7 @@
 }
 
 .toggle-label {
-  color: white;
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 500;
 }

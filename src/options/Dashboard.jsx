@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
+import { useTheme } from "../hooks/useTheme";
 import "./dashboard.css";
 import Banner from "../components/Banner";
 
@@ -25,9 +26,9 @@ const Dashboard = () => {
   const [isAiSectionOpen, setIsAiSectionOpen] = useState(false);
   const [isSitesDropdownOpen, setIsSitesDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("blocked-sites");
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [bannerMessage, setBannerMessage] = useState(null);
-  const [bannerType, setBannerType] = useState('error');
+  const [bannerType, setBannerType] = useState("error");
   const [confirmClear, setConfirmClear] = useState(false);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -38,7 +39,7 @@ const Dashboard = () => {
   const loadData = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(
-      ["blockedSites", "blockStats", "flashcards", "score", "isDarkMode"],
+      ["blockedSites", "blockStats", "flashcards", "score"],
       (result) => {
         setBlockedSites(result.blockedSites || []);
         setStats(
@@ -50,7 +51,6 @@ const Dashboard = () => {
         );
         setFlashcards(result.flashcards || []);
         setScore(result.score || 0);
-        setIsDarkMode(result.isDarkMode || false);
       }
     );
   };
@@ -76,8 +76,10 @@ const Dashboard = () => {
 
     // Basic URL validation
     if (!siteToAdd.includes(".") && !siteToAdd.startsWith("http")) {
-      setBannerMessage("Please enter a valid website (e.g., facebook.com or https://facebook.com)");
-      setBannerType('error');
+      setBannerMessage(
+        "Please enter a valid website (e.g., facebook.com or https://facebook.com)"
+      );
+      setBannerType("error");
       return;
     }
 
@@ -131,8 +133,10 @@ const Dashboard = () => {
 
   const clearAllSites = () => {
     if (!confirmClear) {
-      setBannerMessage("Are you sure you want to clear all blocked sites? Click 'Clear All' again to confirm.");
-      setBannerType('warning');
+      setBannerMessage(
+        "Are you sure you want to clear all blocked sites? Click 'Clear All' again to confirm."
+      );
+      setBannerType("warning");
       setConfirmClear(true);
     } else {
       setBlockedSites([]);
@@ -140,7 +144,7 @@ const Dashboard = () => {
         console.log("All sites cleared");
       });
       setBannerMessage("All blocked sites have been cleared.");
-      setBannerType('success');
+      setBannerType("success");
       setConfirmClear(false);
     }
   };
@@ -171,8 +175,10 @@ const Dashboard = () => {
           });
         }
       } catch (error) {
-        setBannerMessage("Error importing sites. Please check the file format.");
-        setBannerType('error');
+        setBannerMessage(
+          "Error importing sites. Please check the file format."
+        );
+        setBannerType("error");
       }
     };
     reader.readAsText(file);
@@ -236,7 +242,7 @@ const Dashboard = () => {
     // Check file type
     if (!file.name.toLowerCase().endsWith(".csv")) {
       setBannerMessage("Please select a CSV file.");
-      setBannerType('error');
+      setBannerType("error");
       return;
     }
 
@@ -247,8 +253,10 @@ const Dashboard = () => {
         const importedFlashcards = parseCSV(csvText);
 
         if (importedFlashcards.length === 0) {
-          setBannerMessage("No valid flashcards found in the CSV file. Please check the format.");
-          setBannerType('error');
+          setBannerMessage(
+            "No valid flashcards found in the CSV file. Please check the format."
+          );
+          setBannerType("error");
           return;
         }
 
@@ -260,16 +268,20 @@ const Dashboard = () => {
           console.log(
             `Successfully imported ${importedFlashcards.length} flashcards from CSV`
           );
-          setBannerMessage(`Successfully imported ${importedFlashcards.length} flashcards from CSV!`);
-          setBannerType('success');
+          setBannerMessage(
+            `Successfully imported ${importedFlashcards.length} flashcards from CSV!`
+          );
+          setBannerType("success");
         });
 
         // Reset file input
         event.target.value = "";
       } catch (error) {
         console.error("Error importing flashcards:", error);
-        setBannerMessage("Error importing flashcards. Please check the CSV format.");
-        setBannerType('error');
+        setBannerMessage(
+          "Error importing flashcards. Please check the CSV format."
+        );
+        setBannerType("error");
       }
     };
 
@@ -279,7 +291,7 @@ const Dashboard = () => {
   const addFlashcard = () => {
     if (!newFlashcard.front.trim() || !newFlashcard.back.trim()) {
       setBannerMessage("Please fill in both front and back of the flashcard");
-      setBannerType('error');
+      setBannerType("error");
       return;
     }
 
@@ -315,24 +327,20 @@ const Dashboard = () => {
     });
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    chrome.storage.sync.set({ isDarkMode: newDarkMode }, () => {
-      console.log("Dark mode preference saved");
-    });
-  };
+  // Dark mode is now managed by the global theme manager
 
   const generateAIFlashcards = async () => {
     if (!aiPrompt.trim()) {
-      setBannerMessage("Please enter a topic or description for the flashcards");
-      setBannerType('error');
+      setBannerMessage(
+        "Please enter a topic or description for the flashcards"
+      );
+      setBannerType("error");
       return;
     }
 
     if (!GEMINI_API_KEY) {
       setBannerMessage("Please set your GEMINI_API_KEY environment variable");
-      setBannerType('error');
+      setBannerType("error");
       return;
     }
 
@@ -405,8 +413,10 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
       }
 
       if (generatedFlashcards.length === 0) {
-        setBannerMessage("No flashcards could be generated. Please try a different prompt.");
-        setBannerType('error');
+        setBannerMessage(
+          "No flashcards could be generated. Please try a different prompt."
+        );
+        setBannerType("error");
         return;
       }
 
@@ -425,8 +435,10 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
         console.log(
           `Successfully generated ${flashcardsWithIds.length} AI flashcards`
         );
-        setBannerMessage(`Successfully generated ${flashcardsWithIds.length} flashcards!`);
-        setBannerType('success');
+        setBannerMessage(
+          `Successfully generated ${flashcardsWithIds.length} flashcards!`
+        );
+        setBannerType("success");
       });
 
       // Clear the prompt
@@ -434,8 +446,10 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
       setAiCategory("");
     } catch (error) {
       console.error("Error generating flashcards:", error);
-      setBannerMessage("Error generating flashcards. Please check your API key and try again.");
-      setBannerType('error');
+      setBannerMessage(
+        "Error generating flashcards. Please check your API key and try again."
+      );
+      setBannerType("error");
     } finally {
       setIsGenerating(false);
     }
@@ -446,7 +460,7 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
   };
 
   return (
-    <div className={`dashboard ${isDarkMode ? "dark-mode" : ""}`}>
+    <div className="dashboard">
       {bannerMessage && (
         <Banner
           message={bannerMessage}

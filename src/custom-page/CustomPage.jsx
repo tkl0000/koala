@@ -1,33 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
-import './custom-page.css';
-import Banner from '../components/Banner';
+import { useTheme } from "../hooks/useTheme";
+import "./custom-page.css";
+import Banner from "../components/Banner";
 
 const CustomPage = () => {
-  const [originalUrl, setOriginalUrl] = useState('');
+  const [originalUrl, setOriginalUrl] = useState("");
   const [time, setTime] = useState(new Date());
   const [flashcard, setFlashcard] = useState(null);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [userAnswer, setUserAnswer] = useState('');
+  const [userAnswer, setUserAnswer] = useState("");
   const [isGrading, setIsGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState(null);
   const [showAnswerInput, setShowAnswerInput] = useState(false);
   const [allowContinue, setAllowContinue] = useState(false);
-  const [answerSectionClass, setAnswerSectionClass] = useState('answer-input-section');
+  const [answerSectionClass, setAnswerSectionClass] = useState(
+    "answer-input-section"
+  );
   const [score, setScore] = useState(0);
   const [bannerMessage, setBannerMessage] = useState(null);
-  const [bannerType, setBannerType] = useState('error');
+  const [bannerType, setBannerType] = useState("error");
+  const { isDarkMode } = useTheme();
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
     // Get the original URL from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    const original = urlParams.get('original') || 'Unknown';
+    const original = urlParams.get("original") || "Unknown";
     setOriginalUrl(original);
 
     // Load flashcard and score from storage
     loadFlashcard();
     loadScore();
+    // Dark mode is now managed by the global theme manager
 
     // Update time every second
     const timer = setInterval(() => {
@@ -38,7 +43,7 @@ const CustomPage = () => {
   }, []);
 
   const loadFlashcard = () => {
-    chrome.storage.sync.get(['flashcards'], (result) => {
+    chrome.storage.sync.get(["flashcards"], (result) => {
       const flashcards = result.flashcards || [];
       if (flashcards.length > 0) {
         // Get a random flashcard
@@ -50,7 +55,7 @@ const CustomPage = () => {
           id: 1,
           front: "Welcome to Koala Extension!",
           back: "This is a flashcard feature. Add your own flashcards in the dashboard!",
-          category: "Welcome"
+          category: "Welcome",
         };
         setFlashcard(defaultFlashcard);
       }
@@ -58,16 +63,18 @@ const CustomPage = () => {
   };
 
   const loadScore = () => {
-    chrome.storage.sync.get(['score'], (result) => {
+    chrome.storage.sync.get(["score"], (result) => {
       setScore(result.score || 0);
     });
   };
+
+  // Dark mode is now managed by the global theme manager
 
   const updateScore = (isCorrect) => {
     const newScore = isCorrect ? score + 1 : score - 1;
     setScore(newScore);
     chrome.storage.sync.set({ score: newScore }, () => {
-      console.log('Score updated:', newScore);
+      console.log("Score updated:", newScore);
     });
   };
 
@@ -76,16 +83,16 @@ const CustomPage = () => {
   };
 
   const handleNextCard = () => {
-    chrome.storage.sync.get(['flashcards'], (result) => {
+    chrome.storage.sync.get(["flashcards"], (result) => {
       const flashcards = result.flashcards || [];
       if (flashcards.length > 0) {
         const randomIndex = Math.floor(Math.random() * flashcards.length);
         setFlashcard(flashcards[randomIndex]);
         setIsFlipped(false); // Reset flip state for new card
-        setUserAnswer(''); // Reset user answer
+        setUserAnswer(""); // Reset user answer
         setGradeResult(null); // Reset grade result
         setShowAnswerInput(false); // Reset answer input visibility
-        setAnswerSectionClass('answer-input-section'); // Reset answer section background
+        setAnswerSectionClass("answer-input-section"); // Reset answer section background
       }
     });
   };
@@ -97,27 +104,27 @@ const CustomPage = () => {
 
   const gradeAnswer = async () => {
     if (!userAnswer.trim()) {
-      setBannerMessage('Please enter an answer before grading');
-      setBannerType('error');
+      setBannerMessage("Please enter an answer before grading");
+      setBannerType("error");
       return;
     }
 
     setIsGrading(true);
-    
+
     try {
       // Use API key from environment variable
       const apiKey = GEMINI_API_KEY;
       // console.log('Key:', apiKey);
-      
+
       if (!apiKey) {
-        setBannerMessage('Please set your GEMINI_API_KEY environment variable');
-        setBannerType('error');
+        setBannerMessage("Please set your GEMINI_API_KEY environment variable");
+        setBannerType("error");
         setIsGrading(false);
         return;
       }
 
       // Initialize Google GenAI
-      const ai = new GoogleGenAI({apiKey: apiKey});
+      const ai = new GoogleGenAI({ apiKey: apiKey });
 
       const prompt = `You are a helpful tutor grading a student's answer. Please grade the following:
 
@@ -136,39 +143,41 @@ Explanation: [Brief explanation]
 Feedback: [Constructive feedback]`;
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: prompt
+        contents: prompt,
       });
       const generatedText = response.text;
-      
+
       // Parse the response
       const gradeMatch = generatedText.match(/Grade:\s*([A-F])/i);
       const explanationMatch = generatedText.match(/Explanation:\s*([^\n]+)/i);
       const feedbackMatch = generatedText.match(/Feedback:\s*([^\n]+)/i);
-      
+
       setGradeResult({
-        grade: gradeMatch ? gradeMatch[1].toUpperCase() : 'N/A',
-        explanation: explanationMatch ? explanationMatch[1] : 'No explanation provided',
-        feedback: feedbackMatch ? feedbackMatch[1] : 'No feedback provided',
-        fullResponse: generatedText
+        grade: gradeMatch ? gradeMatch[1].toUpperCase() : "N/A",
+        explanation: explanationMatch
+          ? explanationMatch[1]
+          : "No explanation provided",
+        feedback: feedbackMatch ? feedbackMatch[1] : "No feedback provided",
+        fullResponse: generatedText,
       });
 
-      const grade = gradeMatch ? gradeMatch[1].toUpperCase() : 'N/A';
-      if (grade === 'A' || grade === 'B' || grade === 'C') {
+      const grade = gradeMatch ? gradeMatch[1].toUpperCase() : "N/A";
+      if (grade === "A" || grade === "B" || grade === "C") {
         setAllowContinue(true);
-        setAnswerSectionClass('answer-input-section bg-success'); // Green for correct
+        setAnswerSectionClass("answer-input-section bg-success"); // Green for correct
         updateScore(true); // Increment score for correct answer
       } else {
         setAllowContinue(false);
-        setAnswerSectionClass('answer-input-section bg-failure'); // Red for wrong
+        setAnswerSectionClass("answer-input-section bg-failure"); // Red for wrong
         updateScore(false); // Decrement score for wrong answer
       }
     } catch (error) {
-      console.error('Error grading answer:', error);
+      console.error("Error grading answer:", error);
       setGradeResult({
-        grade: 'Error',
-        explanation: 'Failed to grade answer',
-        feedback: 'Please check your API key and try again',
-        fullResponse: error.message
+        grade: "Error",
+        explanation: "Failed to grade answer",
+        feedback: "Please check your API key and try again",
+        fullResponse: error.message,
       });
     } finally {
       setIsGrading(false);
@@ -176,18 +185,18 @@ Feedback: [Constructive feedback]`;
   };
 
   const resetCard = () => {
-    setUserAnswer('');
+    setUserAnswer("");
     setGradeResult(null);
     setShowAnswerInput(false);
     setIsFlipped(false);
-    setAnswerSectionClass('answer-input-section'); // Reset answer section background
+    setAnswerSectionClass("answer-input-section"); // Reset answer section background
   };
 
   const handleGoBack = () => {
-    if (originalUrl && originalUrl !== 'Unknown') {
+    if (originalUrl && originalUrl !== "Unknown") {
       // Add bypass parameter to prevent redirect loop
       const url = new URL(originalUrl);
-      url.searchParams.set('koala_bypass', 'true');
+      url.searchParams.set("koala_bypass", "true");
       window.location.href = url.toString();
     } else {
       window.history.back();
@@ -195,11 +204,11 @@ Feedback: [Constructive feedback]`;
   };
 
   const handleGoToGoogle = () => {
-    window.location.href = 'https://www.google.com';
+    window.location.href = "https://www.google.com";
   };
 
   const handleGoToGitHub = () => {
-    window.location.href = 'https://github.com';
+    window.location.href = "https://github.com";
   };
 
   const handleBannerClose = () => {
@@ -232,7 +241,7 @@ Feedback: [Constructive feedback]`;
           <h2>📚 Flashcard</h2>
           {flashcard && (
             <div className="flashcard-container">
-              <div className={`flashcard ${isFlipped ? 'flipped' : ''}`}>
+              <div className={`flashcard ${isFlipped ? "flipped" : ""}`}>
                 <div className="flashcard-front">
                   <div className="flashcard-content">
                     <h3>{flashcard.front}</h3>
@@ -265,12 +274,12 @@ Feedback: [Constructive feedback]`;
                     className="answer-input"
                     rows="3"
                   />
-                  <button 
-                    onClick={gradeAnswer} 
+                  <button
+                    onClick={gradeAnswer}
                     className="grade-btn"
                     disabled={isGrading}
                   >
-                    {isGrading ? 'Grading...' : 'Check'}
+                    {isGrading ? "Grading..." : "Check"}
                   </button>
                   <button onClick={resetCard} className="reset-btn">
                     Reset
@@ -326,14 +335,14 @@ Feedback: [Constructive feedback]`;
         </div>
 
         {allowContinue && (
-        <div className="actions-card">
-          {/* <h2>Quick Actions</h2> */}
-          <div className="action-buttons">
-            <button onClick={handleGoBack} className="action-btn primary">
-              Continue
-              {/* {allowContinue ? 'Yes' : 'No'} */}
-            </button>
-            {/* <button onClick={handleGoToGoogle} className="action-btn secondary">
+          <div className="actions-card">
+            {/* <h2>Quick Actions</h2> */}
+            <div className="action-buttons">
+              <button onClick={handleGoBack} className="action-btn primary">
+                Continue
+                {/* {allowContinue ? 'Yes' : 'No'} */}
+              </button>
+              {/* <button onClick={handleGoToGoogle} className="action-btn secondary">
               🔍 Go to Google
             </button>
             <button onClick={handleGoToGitHub} className="action-btn secondary">

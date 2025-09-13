@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from "../hooks/useTheme";
 import Banner from "../components/Banner";
 
 const Popup = () => {
@@ -16,8 +17,9 @@ const Popup = () => {
   });
   const [isEnabled, setIsEnabled] = useState(true);
   const [score, setScore] = useState(0);
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [bannerMessage, setBannerMessage] = useState(null);
-  const [bannerType, setBannerType] = useState('error');
+  const [bannerType, setBannerType] = useState("error");
   const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
@@ -59,6 +61,8 @@ const Popup = () => {
       setScore(result.score || 0);
     });
 
+    // Dark mode is now managed by the global theme manager
+
     // Load extension enabled state
     chrome.storage.sync.get(["interceptConfig"], (result) => {
       if (result.interceptConfig) {
@@ -82,24 +86,28 @@ const Popup = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  // Dark mode is now managed by the global theme manager
+
   const resetScore = () => {
-      setScore(0);
-      chrome.storage.sync.set({ score: 0 }, () => {
-        console.log("Score reset successfully");
-      });
+    setScore(0);
+    chrome.storage.sync.set({ score: 0 }, () => {
+      console.log("Score reset successfully");
+    });
   };
 
   const toggleExtension = () => {
     if (isEnabled) {
       if (!confirmReset) {
-        setBannerMessage("Are you sure? This will reset your Koala Kudos! Click the toggle again to confirm.");
-        setBannerType('warning');
+        setBannerMessage(
+          "Are you sure? This will reset your Koala Kudos! Click the toggle again to confirm."
+        );
+        setBannerType("warning");
         setConfirmReset(true);
         return;
       } else {
         resetScore();
         setBannerMessage("Koala Kudos have been reset.");
-        setBannerType('success');
+        setBannerType("success");
         setConfirmReset(false);
       }
     }
@@ -154,10 +162,13 @@ const Popup = () => {
       )}
       <div className="header">
         <h1>🦥 Koala</h1>
-        {/* Tailwind Test Button */}
-        {/* <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
-          Tailwind Test Button
-        </button> */}
+        <button
+          className="dark-mode-toggle"
+          onClick={toggleDarkMode}
+          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {isDarkMode ? "☀️" : "🌙"}
+        </button>
       </div>
 
       <div className="content">
@@ -194,7 +205,11 @@ const Popup = () => {
             </div>
             <div className="stat-item">
               <span className="stat-label">Koala Kudos:</span>
-              <span className={`stat-value ${score >= 0 ? 'positive-score' : 'negative-score'}`}>
+              <span
+                className={`stat-value ${
+                  score >= 0 ? "positive-score" : "negative-score"
+                }`}
+              >
                 {score}
               </span>
             </div>
