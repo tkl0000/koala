@@ -1086,7 +1086,6 @@
   transform: none;
 }
 
-<<<<<<< HEAD
 /* Leaderboard styles */
 .leaderboard-section {
   margin-bottom: 30px;
@@ -1268,7 +1267,8 @@
 .empty-state p {
   color: rgba(255, 255, 255, 0.6);
   font-style: italic;
-=======
+}
+
 /* Flashcard Settings Section */
 .flashcard-settings-section {
   margin: 20px 0;
@@ -1347,5 +1347,4 @@
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.9rem;
   line-height: 1.4;
->>>>>>> 2f56b0e05bdd9f943fdd88e19ecd76dab6deba41
 }
