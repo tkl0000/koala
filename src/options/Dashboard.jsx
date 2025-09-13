@@ -391,7 +391,7 @@ const Dashboard = () => {
 
   const getAvatarForUser = (username) => {
     // Generate consistent avatar based on username
-    const avatars = ["🎓", "👑", "🐨", "🧠", "🧙‍♂️", "🥷", "🧠", "📚", "🦥", "🌱", "🎯", "⭐", "🔥", "💎", "🚀"];
+    const avatars = ["🎓", "👑", "🐨", "🧠", "🧙‍♂️", "🥷", "🧠", "📚", "🐨", "🌱", "🎯", "⭐", "🔥", "💎", "🚀"];
     const hash = username.split('').reduce((a, b) => {
       a = ((a << 5) - a) + b.charCodeAt(0);
       return a & a;

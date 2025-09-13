@@ -188,7 +188,7 @@ const Popup = () => {
         />
       )}
       <div className="header">
-        <h1>🦥 Koala</h1>
+        <h1>🐨 Koala</h1>
         <button
           className="dark-mode-toggle"
           onClick={toggleDarkMode}

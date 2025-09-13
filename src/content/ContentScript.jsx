@@ -168,7 +168,7 @@ const ContentScript = () => {
     <></>
     // <div className="koala-content-script">
     //   <div className="koala-header">
-    //     <h3>🦥 Koala Extension</h3>
+    //     <h3>🐨 Koala Extension</h3>
     //     <button onClick={handleClose} className="close-btn">×</button>
     //   </div>
       
