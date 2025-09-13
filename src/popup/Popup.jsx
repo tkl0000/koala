@@ -14,6 +14,7 @@ const Popup = () => {
     lastBlocked: null,
   });
   const [isEnabled, setIsEnabled] = useState(true);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     // Get current tab URL
@@ -49,6 +50,11 @@ const Popup = () => {
       }
     });
 
+    // Load score
+    chrome.storage.sync.get(["score"], (result) => {
+      setScore(result.score || 0);
+    });
+
     // Load extension enabled state
     chrome.storage.sync.get(["interceptConfig"], (result) => {
       if (result.interceptConfig) {
@@ -72,7 +78,21 @@ const Popup = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const resetScore = () => {
+      setScore(0);
+      chrome.storage.sync.set({ score: 0 }, () => {
+        console.log("Score reset successfully");
+      });
+  };
+
   const toggleExtension = () => {
+    if (isEnabled) {
+      if (!confirm("Are you sure? This will reset your Koala Kudos!")) return;
+      else {
+        resetScore();
+      }
+    }
+
     const newEnabled = !isEnabled;
     setIsEnabled(newEnabled);
 
@@ -112,16 +132,16 @@ const Popup = () => {
       <div className="header">
         <h1>🦥 Koala</h1>
         {/* Tailwind Test Button */}
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+        {/* <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
           Tailwind Test Button
-        </button>
+        </button> */}
       </div>
 
       <div className="content">
-        <div className="url-section">
+        {/* <div className="url-section">
           <h3>Current Page:</h3>
           <p className="url">{currentUrl}</p>
-        </div>
+        </div> */}
 
         <div className="extension-toggle-section">
           <label className="toggle-container">
@@ -148,6 +168,12 @@ const Popup = () => {
             <div className="stat-item">
               <span className="stat-label">Total Blocks:</span>
               <span className="stat-value">{blockStats.totalBlocked}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Koala Kudos:</span>
+              <span className={`stat-value ${score >= 0 ? 'positive-score' : 'negative-score'}`}>
+                {score}
+              </span>
             </div>
           </div>
         </div>
@@ -187,6 +213,9 @@ const Popup = () => {
           <button onClick={handleOpenOptions} className="btn btn-outline">
             Open Dashboard
           </button>
+          {/* <button onClick={resetScore} className="btn btn-danger">
+            Reset Points
+          </button> */}
         </div>
       </div>
     </div>

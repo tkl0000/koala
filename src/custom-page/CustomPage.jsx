@@ -12,6 +12,8 @@ const CustomPage = () => {
   const [gradeResult, setGradeResult] = useState(null);
   const [showAnswerInput, setShowAnswerInput] = useState(false);
   const [allowContinue, setAllowContinue] = useState(false);
+  const [answerSectionClass, setAnswerSectionClass] = useState('answer-input-section');
+  const [score, setScore] = useState(0);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -20,8 +22,9 @@ const CustomPage = () => {
     const original = urlParams.get('original') || 'Unknown';
     setOriginalUrl(original);
 
-    // Load flashcard from storage
+    // Load flashcard and score from storage
     loadFlashcard();
+    loadScore();
 
     // Update time every second
     const timer = setInterval(() => {
@@ -51,6 +54,20 @@ const CustomPage = () => {
     });
   };
 
+  const loadScore = () => {
+    chrome.storage.sync.get(['score'], (result) => {
+      setScore(result.score || 0);
+    });
+  };
+
+  const updateScore = (isCorrect) => {
+    const newScore = isCorrect ? score + 1 : score - 1;
+    setScore(newScore);
+    chrome.storage.sync.set({ score: newScore }, () => {
+      console.log('Score updated:', newScore);
+    });
+  };
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
@@ -65,6 +82,7 @@ const CustomPage = () => {
         setUserAnswer(''); // Reset user answer
         setGradeResult(null); // Reset grade result
         setShowAnswerInput(false); // Reset answer input visibility
+        setAnswerSectionClass('answer-input-section'); // Reset answer section background
       }
     });
   };
@@ -132,8 +150,12 @@ Feedback: [Constructive feedback]`;
       const grade = gradeMatch ? gradeMatch[1].toUpperCase() : 'N/A';
       if (grade === 'A' || grade === 'B' || grade === 'C') {
         setAllowContinue(true);
+        setAnswerSectionClass('answer-input-section bg-success'); // Green for correct
+        updateScore(true); // Increment score for correct answer
       } else {
         setAllowContinue(false);
+        setAnswerSectionClass('answer-input-section bg-failure'); // Red for wrong
+        updateScore(false); // Decrement score for wrong answer
       }
     } catch (error) {
       console.error('Error grading answer:', error);
@@ -153,6 +175,7 @@ Feedback: [Constructive feedback]`;
     setGradeResult(null);
     setShowAnswerInput(false);
     setIsFlipped(false);
+    setAnswerSectionClass('answer-input-section'); // Reset answer section background
   };
 
   const handleGoBack = () => {
@@ -180,6 +203,12 @@ Feedback: [Constructive feedback]`;
         <h1>🐨 Koala Extension Intercepted!</h1>
         {/* <p>This page was loaded by the Koala Chrome Extension</p> */}
         <p>Time for a study session twin</p>
+        {/* <div className="score-display">
+          <span className="score-label">Score:</span>
+          <span className={`score-value ${score >= 0 ? 'positive' : 'negative'}`}>
+            {score}
+          </span>
+        </div> */}
       </div>
 
       <div className="custom-content">
@@ -187,7 +216,7 @@ Feedback: [Constructive feedback]`;
           <h2>📚 Flashcard</h2>
           {flashcard && (
             <div className="flashcard-container">
-              <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
+              <div className={`flashcard ${isFlipped ? 'flipped' : ''}`}>
                 <div className="flashcard-front">
                   <div className="flashcard-content">
                     <h3>{flashcard.front}</h3>
@@ -211,7 +240,7 @@ Feedback: [Constructive feedback]`;
                 {/* <button onClick={handleShowAnswerInput} className="flashcard-btn secondary">
                   Try Answer
                 </button> */}
-                <div className="answer-input-section w-full flex flex-row">
+                <div className={`${answerSectionClass} w-full flex flex-row`}>
                   {/* <h4>Enter Your Answer:</h4> */}
                   <textarea
                     value={userAnswer}

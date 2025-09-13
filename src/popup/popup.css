@@ -250,6 +250,14 @@
   color: #fff;
 }
 
+.positive-score {
+  color: #22c55e !important;
+}
+
+.negative-score {
+  color: #ef4444 !important;
+}
+
 /* Extension toggle section */
 .extension-toggle-section {
   margin-bottom: 20px;

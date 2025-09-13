@@ -16,6 +16,7 @@ const Dashboard = () => {
     category: "",
   });
   const [isShaking, setIsShaking] = useState(false);
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -24,7 +25,7 @@ const Dashboard = () => {
   const loadData = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(
-      ["blockedSites", "blockStats", "flashcards"],
+      ["blockedSites", "blockStats", "flashcards", "score"],
       (result) => {
         setBlockedSites(result.blockedSites || []);
         setStats(
@@ -35,6 +36,7 @@ const Dashboard = () => {
           }
         );
         setFlashcards(result.flashcards || []);
+        setScore(result.score || 0);
       }
     );
   };
@@ -284,6 +286,13 @@ const Dashboard = () => {
     });
   };
 
+  const resetScore = () => {
+    setScore(0);
+    chrome.storage.sync.set({ score: 0 }, () => {
+      console.log("Score reset successfully");
+    });
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -299,6 +308,12 @@ const Dashboard = () => {
           <div className="stat-item">
             <span className="stat-number">{stats.totalBlocked}</span>
             <span className="stat-label">Total Blocks</span>
+          </div>
+          <div className="stat-item">
+            <span className={`stat-number ${score >= 0 ? 'positive-score' : 'negative-score'}`}>
+              {score}
+            </span>
+            <span className="stat-label">Koala Kudos</span>
           </div>
         </div>
       </header>
@@ -385,6 +400,9 @@ const Dashboard = () => {
                   style={{ display: "none" }}
                 />
               </label>
+              <button onClick={resetScore} className="action-btn danger">
+                🔄 Reset Score
+              </button>
             </div>
           </div>
 

@@ -53,6 +53,14 @@
   margin-top: 4px;
 }
 
+.positive-score {
+  color: #22c55e !important;
+}
+
+.negative-score {
+  color: #ef4444 !important;
+}
+
 .dashboard-content {
   padding: 25px;
   max-width: 1200px;
