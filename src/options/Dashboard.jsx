@@ -23,6 +23,8 @@ const Dashboard = () => {
   const [aiCategory, setAiCategory] = useState("");
   const [isAiSectionOpen, setIsAiSectionOpen] = useState(false);
   const [isSitesDropdownOpen, setIsSitesDropdownOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("blocked-sites");
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -32,7 +34,7 @@ const Dashboard = () => {
   const loadData = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(
-      ["blockedSites", "blockStats", "flashcards", "score"],
+      ["blockedSites", "blockStats", "flashcards", "score", "isDarkMode"],
       (result) => {
         setBlockedSites(result.blockedSites || []);
         setStats(
@@ -44,6 +46,7 @@ const Dashboard = () => {
         );
         setFlashcards(result.flashcards || []);
         setScore(result.score || 0);
+        setIsDarkMode(result.isDarkMode || false);
       }
     );
   };
@@ -300,6 +303,14 @@ const Dashboard = () => {
     });
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    chrome.storage.sync.set({ isDarkMode: newDarkMode }, () => {
+      console.log("Dark mode preference saved");
+    });
+  };
+
   const generateAIFlashcards = async () => {
     if (!aiPrompt.trim()) {
       alert("Please enter a topic or description for the flashcards");
@@ -418,328 +429,377 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
   };
 
   return (
-    <div className="dashboard">
+    <div className={`dashboard ${isDarkMode ? "dark-mode" : ""}`}>
       <header className="dashboard-header">
         <div className="header-content">
           <h1>🦥 Koala Extension Dashboard</h1>
           <p>Manage your blocked websites and flashcards</p>
         </div>
-        <div className="header-stats">
-          <div className="stat-item">
-            <span className="stat-number">{blockedSites.length}</span>
-            <span className="stat-label">Sites Blocked</span>
+        <div className="header-controls">
+          <div className="header-stats">
+            <div className="stat-item">
+              <span className="stat-number">{blockedSites.length}</span>
+              <span className="stat-label">Sites Blocked</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{stats.totalBlocked}</span>
+              <span className="stat-label">Total Blocks</span>
+            </div>
+            <div className="stat-item">
+              <span
+                className={`stat-number ${
+                  score >= 0 ? "positive-score" : "negative-score"
+                }`}
+              >
+                {score}
+              </span>
+              <span className="stat-label">Koala Kudos</span>
+            </div>
           </div>
-          <div className="stat-item">
-            <span className="stat-number">{stats.totalBlocked}</span>
-            <span className="stat-label">Total Blocks</span>
-          </div>
-          <div className="stat-item">
-            <span
-              className={`stat-number ${
-                score >= 0 ? "positive-score" : "negative-score"
-              }`}
-            >
-              {score}
-            </span>
-            <span className="stat-label">Koala Kudos</span>
-          </div>
+          <button
+            className="dark-mode-toggle"
+            onClick={toggleDarkMode}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? "☀️" : "🌙"}
+          </button>
         </div>
       </header>
 
-      <div className="dashboard-content">
-        <div className="blocked-sites-section">
-          <div className="section-header">
-            <h2>Blocked Websites ({blockedSites.length})</h2>
-            <div className="section-actions">
-              <button onClick={exportSites} className="action-btn secondary">
-                Export
-              </button>
-              <label className="action-btn secondary">
-                Import
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importSites}
-                  style={{ display: "none" }}
-                />
-              </label>
-              <button onClick={clearAllSites} className="action-btn danger">
-                Clear All
-              </button>
-            </div>
-          </div>
-
-          <div className="add-site-form">
-            <input
-              type="text"
-              value={newSite}
-              onChange={(e) => setNewSite(e.target.value)}
-              placeholder="Enter website to block (e.g., facebook.com, twitter.com)"
-              className={`site-input ${isShaking ? "shake" : ""}`}
-              onKeyPress={(e) => e.key === "Enter" && addSite()}
-            />
-            <button onClick={addSite} className="add-btn">
-              Add Site
-            </button>
-          </div>
-
-          {blockedSites.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🚫</div>
-              <h3>No sites blocked yet</h3>
-              <p>Add websites above to start blocking them</p>
-            </div>
-          ) : (
-            <>
-              {blockedSites.length <= 5 ? (
-                <div className="sites-grid">
-                  {blockedSites.map((site) => (
-                    <div key={site.id} className="site-card">
-                      <div className="site-info">
-                        <div className="site-name">{site.name}</div>
-                        <div className="site-url">{site.url}</div>
-                        <div className="site-meta">
-                          Added: {new Date(site.addedDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <div className="site-actions">
-                        <button
-                          onClick={() => removeSite(site.id)}
-                          className="remove-btn"
-                          title="Remove site"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="sites-dropdown-container">
-                  <div className="sites-dropdown-header">
-                    <span className="sites-count">Showing {blockedSites.length} blocked sites</span>
-                    <button
-                      className="dropdown-toggle-btn"
-                      onClick={() => setIsSitesDropdownOpen(!isSitesDropdownOpen)}
-                    >
-                      {isSitesDropdownOpen ? 'Hide Sites' : 'Show Sites'}
-                      <span className={`dropdown-arrow ${isSitesDropdownOpen ? 'open' : ''}`}>
-                        ▼
-                      </span>
-                    </button>
-                  </div>
-                  {isSitesDropdownOpen && (
-                    <div className="sites-dropdown-content">
-                      <div className="sites-grid">
-                        {blockedSites.map((site) => (
-                          <div key={site.id} className="site-card">
-                            <div className="site-info">
-                              <div className="site-name">{site.name}</div>
-                              <div className="site-url">{site.url}</div>
-                              <div className="site-meta">
-                                Added: {new Date(site.addedDate).toLocaleDateString()}
-                              </div>
-                            </div>
-                            <div className="site-actions">
-                              <button
-                                onClick={() => removeSite(site.id)}
-                                className="remove-btn"
-                                title="Remove site"
-                              >
-                                ✕
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+      <nav className="dashboard-nav">
+        <div className="nav-tabs">
+          <button
+            className={`nav-tab ${
+              activeTab === "blocked-sites" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("blocked-sites")}
+          >
+            🚫 Blocked Sites ({blockedSites.length})
+          </button>
+          <button
+            className={`nav-tab ${activeTab === "flashcards" ? "active" : ""}`}
+            onClick={() => setActiveTab("flashcards")}
+          >
+            📚 Flashcards ({flashcards.length})
+          </button>
         </div>
+      </nav>
 
-        <div className="flashcards-section">
-          <div className="section-header">
-            <h2>📚 Flashcards ({flashcards.length})</h2>
-            <div className="section-actions">
-              <div className="csv-import-container">
+      <div className="dashboard-content">
+        {activeTab === "blocked-sites" && (
+          <div className="blocked-sites-section">
+            <div className="section-header">
+              <h2>Blocked Websites ({blockedSites.length})</h2>
+              <div className="section-actions">
+                <button onClick={exportSites} className="action-btn secondary">
+                  Export
+                </button>
                 <label className="action-btn secondary">
-                  📥 Import CSV
+                  Import
                   <input
                     type="file"
-                    accept=".csv"
-                    onChange={importFlashcardsCSV}
+                    accept=".json"
+                    onChange={importSites}
                     style={{ display: "none" }}
                   />
                 </label>
-                <div className="tooltip">
-                  <span className="tooltip-icon">?</span>
-                  <div className="tooltip-content">
-                    <div className="tooltip-header">CSV Format</div>
-                    <div className="tooltip-body">
-                      <p>
-                        <strong>Format:</strong>{" "}
-                        <code>front,back,category</code>
-                      </p>
-                      <p>
-                        <strong>Example:</strong>
-                      </p>
-                      <code>
-                        "What is the capital of France?","Paris","Geography"
-                      </code>
-                      <p>
-                        Supports Quizlet exports and other CSV formats with
-                        question/answer pairs.
-                      </p>
+                <button onClick={clearAllSites} className="action-btn danger">
+                  Clear All
+                </button>
+              </div>
+            </div>
+
+            <div className="add-site-form">
+              <input
+                type="text"
+                value={newSite}
+                onChange={(e) => setNewSite(e.target.value)}
+                placeholder="Enter website to block (e.g., facebook.com, twitter.com)"
+                className={`site-input ${isShaking ? "shake" : ""}`}
+                onKeyPress={(e) => e.key === "Enter" && addSite()}
+              />
+              <button onClick={addSite} className="add-btn">
+                Add Site
+              </button>
+            </div>
+
+            {blockedSites.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🚫</div>
+                <h3>No sites blocked yet</h3>
+                <p>Add websites above to start blocking them</p>
+              </div>
+            ) : (
+              <>
+                {blockedSites.length <= 5 ? (
+                  <div className="sites-grid">
+                    {blockedSites.map((site) => (
+                      <div key={site.id} className="site-card">
+                        <div className="site-info">
+                          <div className="site-name">{site.name}</div>
+                          <div className="site-url">{site.url}</div>
+                          <div className="site-meta">
+                            Added:{" "}
+                            {new Date(site.addedDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="site-actions">
+                          <button
+                            onClick={() => removeSite(site.id)}
+                            className="remove-btn"
+                            title="Remove site"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="sites-dropdown-container">
+                    <div className="sites-dropdown-header">
+                      <span className="sites-count">
+                        Showing {blockedSites.length} blocked sites
+                      </span>
+                      <button
+                        className="dropdown-toggle-btn"
+                        onClick={() =>
+                          setIsSitesDropdownOpen(!isSitesDropdownOpen)
+                        }
+                      >
+                        {isSitesDropdownOpen ? "Hide Sites" : "Show Sites"}
+                        <span
+                          className={`dropdown-arrow ${
+                            isSitesDropdownOpen ? "open" : ""
+                          }`}
+                        >
+                          ▼
+                        </span>
+                      </button>
+                    </div>
+                    {isSitesDropdownOpen && (
+                      <div className="sites-dropdown-content">
+                        <div className="sites-grid">
+                          {blockedSites.map((site) => (
+                            <div key={site.id} className="site-card">
+                              <div className="site-info">
+                                <div className="site-name">{site.name}</div>
+                                <div className="site-url">{site.url}</div>
+                                <div className="site-meta">
+                                  Added:{" "}
+                                  {new Date(
+                                    site.addedDate
+                                  ).toLocaleDateString()}
+                                </div>
+                              </div>
+                              <div className="site-actions">
+                                <button
+                                  onClick={() => removeSite(site.id)}
+                                  className="remove-btn"
+                                  title="Remove site"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {activeTab === "flashcards" && (
+          <div className="flashcards-section">
+            <div className="section-header">
+              <h2>📚 Flashcards ({flashcards.length})</h2>
+              <div className="section-actions">
+                <div className="csv-import-container">
+                  <label className="action-btn secondary">
+                    📥 Import CSV
+                    <input
+                      type="file"
+                      accept=".csv"
+                      onChange={importFlashcardsCSV}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                  <div className="tooltip">
+                    <span className="tooltip-icon">?</span>
+                    <div className="tooltip-content">
+                      <div className="tooltip-header">CSV Format</div>
+                      <div className="tooltip-body">
+                        <p>
+                          <strong>Format:</strong>{" "}
+                          <code>front,back,category</code>
+                        </p>
+                        <p>
+                          <strong>Example:</strong>
+                        </p>
+                        <code>
+                          "What is the capital of France?","Paris","Geography"
+                        </code>
+                        <p>
+                          Supports Quizlet exports and other CSV formats with
+                          question/answer pairs.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <button onClick={resetScore} className="action-btn danger">
+                  🔄 Reset Score
+                </button>
               </div>
-              <button onClick={resetScore} className="action-btn danger">
-                🔄 Reset Score
-              </button>
             </div>
-          </div>
 
-          <div className="add-flashcard-section">
-            <h3>Add New Flashcard</h3>
+            <div className="add-flashcard-section">
+              <h3>Add New Flashcard</h3>
 
-            {/* AI Generation Section */}
-            <div className="ai-generation-section">
-              <div
-                className="ai-section-header"
-                onClick={() => setIsAiSectionOpen(!isAiSectionOpen)}
-              >
-                <h4>🤖 AI Flashcard Generator</h4>
-                <span
-                  className={`dropdown-arrow ${isAiSectionOpen ? "open" : ""}`}
+              {/* AI Generation Section */}
+              <div className="ai-generation-section">
+                <div
+                  className="ai-section-header"
+                  onClick={() => setIsAiSectionOpen(!isAiSectionOpen)}
                 >
-                  ▼
-                </span>
+                  <h4>🤖 AI Flashcard Generator</h4>
+                  <span
+                    className={`dropdown-arrow ${
+                      isAiSectionOpen ? "open" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+                </div>
+
+                {isAiSectionOpen && (
+                  <div className="ai-section-content">
+                    <p className="ai-info">
+                      Describe any topic and let AI generate educational
+                      flashcards for you!
+                    </p>
+                    <div className="ai-form">
+                      <div className="form-group">
+                        <label>Topic or Description:</label>
+                        <textarea
+                          value={aiPrompt}
+                          onChange={(e) => setAiPrompt(e.target.value)}
+                          placeholder="e.g., 'Photosynthesis in plants', 'World War 2 history', 'JavaScript fundamentals', 'Spanish vocabulary for beginners'"
+                          className="form-textarea"
+                          rows="3"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Category (Optional):</label>
+                        <input
+                          type="text"
+                          value={aiCategory}
+                          onChange={(e) => setAiCategory(e.target.value)}
+                          placeholder="e.g., Biology, History, Programming"
+                          className="form-input"
+                        />
+                      </div>
+                      <button
+                        onClick={generateAIFlashcards}
+                        className="ai-generate-btn"
+                        disabled={isGenerating || !aiPrompt.trim()}
+                      >
+                        {isGenerating
+                          ? "🤖 Generating Flashcards..."
+                          : "🤖 Generate Flashcards"}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {isAiSectionOpen && (
-                <div className="ai-section-content">
-                  <p className="ai-info">
-                    Describe any topic and let AI generate educational
-                    flashcards for you!
-                  </p>
-                  <div className="ai-form">
-                    <div className="form-group">
-                      <label>Topic or Description:</label>
-                      <textarea
-                        value={aiPrompt}
-                        onChange={(e) => setAiPrompt(e.target.value)}
-                        placeholder="e.g., 'Photosynthesis in plants', 'World War 2 history', 'JavaScript fundamentals', 'Spanish vocabulary for beginners'"
-                        className="form-textarea"
-                        rows="3"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Category (Optional):</label>
-                      <input
-                        type="text"
-                        value={aiCategory}
-                        onChange={(e) => setAiCategory(e.target.value)}
-                        placeholder="e.g., Biology, History, Programming"
-                        className="form-input"
-                      />
+              <div className="flashcard-form">
+                <div className="form-group">
+                  <label>Front (Question):</label>
+                  <input
+                    type="text"
+                    value={newFlashcard.front}
+                    onChange={(e) =>
+                      setNewFlashcard({
+                        ...newFlashcard,
+                        front: e.target.value,
+                      })
+                    }
+                    placeholder="Enter the question or front text"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Back (Answer):</label>
+                  <input
+                    type="text"
+                    value={newFlashcard.back}
+                    onChange={(e) =>
+                      setNewFlashcard({ ...newFlashcard, back: e.target.value })
+                    }
+                    placeholder="Enter the answer or back text"
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Category (Optional):</label>
+                  <input
+                    type="text"
+                    value={newFlashcard.category}
+                    onChange={(e) =>
+                      setNewFlashcard({
+                        ...newFlashcard,
+                        category: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., Math, Science, Language"
+                    className="form-input"
+                  />
+                </div>
+                <button onClick={addFlashcard} className="add-flashcard-btn">
+                  Add Flashcard
+                </button>
+              </div>
+            </div>
+
+            {flashcards.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">📚</div>
+                <h3>No flashcards yet</h3>
+                <p>Add flashcards above to see them when sites are blocked</p>
+              </div>
+            ) : (
+              <div className="flashcards-grid">
+                {flashcards.map((card) => (
+                  <div key={card.id} className="flashcard-preview">
+                    <div className="flashcard-preview-content">
+                      <div className="flashcard-preview-front">
+                        <strong>Front:</strong> {card.front}
+                      </div>
+                      <div className="flashcard-preview-back">
+                        <strong>Back:</strong> {card.back}
+                      </div>
+                      <div className="flashcard-preview-category">
+                        Category: {card.category}
+                      </div>
                     </div>
                     <button
-                      onClick={generateAIFlashcards}
-                      className="ai-generate-btn"
-                      disabled={isGenerating || !aiPrompt.trim()}
+                      onClick={() => removeFlashcard(card.id)}
+                      className="remove-flashcard-btn"
+                      title="Remove flashcard"
                     >
-                      {isGenerating
-                        ? "🤖 Generating Flashcards..."
-                        : "🤖 Generate Flashcards"}
+                      ✕
                     </button>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flashcard-form">
-              <div className="form-group">
-                <label>Front (Question):</label>
-                <input
-                  type="text"
-                  value={newFlashcard.front}
-                  onChange={(e) =>
-                    setNewFlashcard({ ...newFlashcard, front: e.target.value })
-                  }
-                  placeholder="Enter the question or front text"
-                  className="form-input"
-                />
+                ))}
               </div>
-              <div className="form-group">
-                <label>Back (Answer):</label>
-                <input
-                  type="text"
-                  value={newFlashcard.back}
-                  onChange={(e) =>
-                    setNewFlashcard({ ...newFlashcard, back: e.target.value })
-                  }
-                  placeholder="Enter the answer or back text"
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label>Category (Optional):</label>
-                <input
-                  type="text"
-                  value={newFlashcard.category}
-                  onChange={(e) =>
-                    setNewFlashcard({
-                      ...newFlashcard,
-                      category: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., Math, Science, Language"
-                  className="form-input"
-                />
-              </div>
-              <button onClick={addFlashcard} className="add-flashcard-btn">
-                Add Flashcard
-              </button>
-            </div>
+            )}
           </div>
-
-          {flashcards.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📚</div>
-              <h3>No flashcards yet</h3>
-              <p>Add flashcards above to see them when sites are blocked</p>
-            </div>
-          ) : (
-            <div className="flashcards-grid">
-              {flashcards.map((card) => (
-                <div key={card.id} className="flashcard-preview">
-                  <div className="flashcard-preview-content">
-                    <div className="flashcard-preview-front">
-                      <strong>Front:</strong> {card.front}
-                    </div>
-                    <div className="flashcard-preview-back">
-                      <strong>Back:</strong> {card.back}
-                    </div>
-                    <div className="flashcard-preview-category">
-                      Category: {card.category}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => removeFlashcard(card.id)}
-                    className="remove-flashcard-btn"
-                    title="Remove flashcard"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
 
         <div className="info-section">
           <h2>How It Works</h2>

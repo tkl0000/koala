@@ -2,6 +2,11 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: all 0.3s ease;
+}
+
+.dashboard.dark-mode {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
 }
 
 .dashboard-header {
@@ -14,6 +19,17 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 15px;
+}
+
+.dashboard.dark-mode .dashboard-header {
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .header-content h1 {
@@ -59,6 +75,96 @@
 
 .negative-score {
   color: #ef4444 !important;
+}
+
+.dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.dashboard.dark-mode .dark-mode-toggle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.dashboard.dark-mode .dark-mode-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Navbar Styles */
+.dashboard-nav {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 30px;
+}
+
+.dashboard.dark-mode .dashboard-nav {
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  padding: 20px 30px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-tab.active {
+  color: white;
+  border-bottom-color: #4CAF50;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard.dark-mode .nav-tab {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dashboard.dark-mode .nav-tab:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dashboard.dark-mode .nav-tab.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dashboard-content {
@@ -194,6 +300,11 @@
   padding: 30px;
   margin-bottom: 30px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dashboard.dark-mode .blocked-sites-section {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .section-header {
@@ -352,6 +463,11 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.dashboard.dark-mode .info-section {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .info-section h2 {
   color: white;
   margin: 0 0 25px 0;
@@ -464,6 +580,11 @@
   padding: 30px;
   margin-bottom: 30px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dashboard.dark-mode .flashcards-section {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .add-flashcard-section {
@@ -608,6 +729,31 @@
     font-size: 2rem;
   }
 
+  .header-controls {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .dashboard-nav {
+    padding: 0 15px;
+  }
+
+  .nav-tabs {
+    flex-direction: column;
+  }
+
+  .nav-tab {
+    padding: 15px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: none;
+  }
+
+  .nav-tab.active {
+    border-bottom-color: #4CAF50;
+    border-right: none;
+  }
+
   .dashboard-content {
     padding: 20px;
   }
@@ -650,6 +796,12 @@
     padding: 10px 20px;
     font-size: 0.9rem;
     align-self: stretch;
+  }
+
+  .dark-mode-toggle {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
   }
 }
 
