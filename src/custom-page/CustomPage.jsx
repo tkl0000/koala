@@ -296,6 +296,9 @@ Feedback: [Constructive feedback]`;
 
   const handleGoBack = () => {
     if (originalUrl && originalUrl !== "Unknown") {
+      // Set cooldown for this site
+      setSiteCooldown(originalUrl);
+      
       // Add bypass parameter to prevent redirect loop
       const url = new URL(originalUrl);
       url.searchParams.set("koala_bypass", "true");
@@ -303,6 +306,22 @@ Feedback: [Constructive feedback]`;
     } else {
       window.history.back();
     }
+  };
+
+  const setSiteCooldown = (siteUrl) => {
+    const cleanUrl = siteUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    
+    chrome.storage.sync.get(['siteCooldowns'], (result) => {
+      const cooldowns = result.siteCooldowns || {};
+      cooldowns[cleanUrl] = {
+        timestamp: Date.now(),
+        originalUrl: siteUrl
+      };
+      
+      chrome.storage.sync.set({ siteCooldowns: cooldowns }, () => {
+        console.log(`🕐 Cooldown set for ${cleanUrl} - 5 minutes`);
+      });
+    });
   };
 
   const handleGoToGoogle = () => {
@@ -378,26 +397,7 @@ Feedback: [Constructive feedback]`;
           </div>
         </div>
         
-        {/* Progress Indicator */}
-        <div className="progress-section">
-          <div className="progress-info">
-            <span className="progress-label">📚 Session Progress:</span>
-            <span className="progress-text">
-              {completedThisSession} / {flashcardLimit} flashcards correct
-            </span>
-          </div>
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${Math.min((completedThisSession / flashcardLimit) * 100, 100)}%` }}
-            ></div>
-          </div>
-          {completedThisSession < flashcardLimit && (
-            <p className="progress-message">
-              Get {flashcardLimit - completedThisSession} more flashcard{flashcardLimit - completedThisSession !== 1 ? 's' : ''} correct to continue
-            </p>
-          )}
-        </div>
+        
       </div>
 
       <div className="custom-content">
@@ -505,6 +505,27 @@ Feedback: [Constructive feedback]`;
                 </div>
               )}
             </div>
+          )}
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="progress-section">
+          <div className="progress-info">
+            <span className="progress-label">📚 Session Progress:</span>
+            <span className="progress-text">
+              {completedThisSession} / {flashcardLimit} flashcards correct
+            </span>
+          </div>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${Math.min((completedThisSession / flashcardLimit) * 100, 100)}%` }}
+            ></div>
+          </div>
+          {completedThisSession < flashcardLimit && (
+            <p className="progress-message">
+              Get {flashcardLimit - completedThisSession} more flashcard{flashcardLimit - completedThisSession !== 1 ? 's' : ''} correct to continue
+            </p>
           )}
         </div>
 
