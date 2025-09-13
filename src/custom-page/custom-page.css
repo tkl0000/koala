@@ -78,6 +78,169 @@
   border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
+/* Stats Display Styles */
+.stats-display {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 80px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-width: 40px;
+}
+
+.stat-value.streak.positive {
+  background: rgba(255, 193, 7, 0.3);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  animation: streakGlow 2s ease-in-out infinite alternate;
+}
+
+.stat-value.streak.neutral {
+  background: rgba(108, 117, 125, 0.3);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.5);
+}
+
+.stat-value.best-streak {
+  background: rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.5);
+}
+
+.stat-value.accuracy {
+  background: rgba(0, 123, 255, 0.3);
+  color: #007bff;
+  border: 1px solid rgba(0, 123, 255, 0.5);
+}
+
+.stat-value.score.positive {
+  background: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.5);
+}
+
+.stat-value.score.negative {
+  background: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+}
+
+/* Streak glow animation */
+@keyframes streakGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.6), 0 0 25px rgba(255, 193, 7, 0.3);
+  }
+}
+
+/* Koala Mood Display Styles */
+.koala-mood-section {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.koala-mood-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 25px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.koala-mood-container:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.koala-mood-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+  border: 3px solid transparent;
+}
+
+.koala-mood-icon.koala-happy {
+  border-color: rgba(34, 197, 94, 0.6);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  animation: koalaBounce 2s ease-in-out infinite;
+}
+
+.koala-mood-icon.koala-sad {
+  border-color: rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  filter: grayscale(0.3) brightness(0.8);
+}
+
+.koala-mood-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.koala-message {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  line-height: 1.4;
+}
+
+/* Koala bounce animation for happy mood */
+@keyframes koalaBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 .custom-content {
   flex: 1;
   padding: 40px 20px;
@@ -555,5 +718,38 @@
   .flashcard-btn {
     padding: 8px 16px;
     font-size: 0.8rem;
+  }
+
+  .stats-display {
+    gap: 10px;
+  }
+
+  .stat-item {
+    min-width: 70px;
+    padding: 8px 12px;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
+  .koala-mood-container {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 20px;
+  }
+
+  .koala-mood-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .koala-message {
+    font-size: 0.9rem;
+    text-align: center;
   }
 }
