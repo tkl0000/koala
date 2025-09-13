@@ -36,6 +36,9 @@ const Dashboard = () => {
   const [bannerType, setBannerType] = useState("error");
   const [confirmClear, setConfirmClear] = useState(false);
   const [flashcardLimit, setFlashcardLimit] = useState(3);
+  const [aiFlashcardCount, setAiFlashcardCount] = useState(5);
+  const [isAiCountFocused, setIsAiCountFocused] = useState(false);
+  const [isLimitFocused, setIsLimitFocused] = useState(false);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -46,7 +49,14 @@ const Dashboard = () => {
   const loadData = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(
-      ["blockedSites", "blockStats", "flashcards", "score", "flashcardLimit"],
+      [
+        "blockedSites",
+        "blockStats",
+        "flashcards",
+        "score",
+        "flashcardLimit",
+        "aiFlashcardCount",
+      ],
       (result) => {
         setBlockedSites(result.blockedSites || []);
         setStats(
@@ -59,6 +69,7 @@ const Dashboard = () => {
         setFlashcards(result.flashcards || []);
         setScore(result.score || 0);
         setFlashcardLimit(result.flashcardLimit || 3);
+        setAiFlashcardCount(result.aiFlashcardCount || 5);
       }
     );
   };
@@ -335,13 +346,13 @@ const Dashboard = () => {
     });
 
     // Sync with Supabase leaderboard
-    chrome.storage.sync.get(['username'], async (result) => {
-      const username = result.username || 'Anonymous';
+    chrome.storage.sync.get(["username"], async (result) => {
+      const username = result.username || "Anonymous";
       const response = await updateLeaderboardScore(username, 0);
       if (response.success) {
-        console.log('Leaderboard reset successfully');
+        console.log("Leaderboard reset successfully");
       } else {
-        console.error('Failed to reset leaderboard:', response.error);
+        console.error("Failed to reset leaderboard:", response.error);
       }
     });
   };
@@ -356,32 +367,32 @@ const Dashboard = () => {
   const fetchLeaderboard = async () => {
     setIsLoadingLeaderboard(true);
     setLeaderboardError(null);
-    
+
     try {
       const response = await getLeaderboard();
       if (response.success) {
         // Get current username to identify current user
-        chrome.storage.sync.get(['username'], (result) => {
-          const currentUsername = result.username || 'Anonymous';
-          
+        chrome.storage.sync.get(["username"], (result) => {
+          const currentUsername = result.username || "Anonymous";
+
           // Transform database data to include rank and avatar
           const transformedData = response.data.map((player, index) => ({
             rank: index + 1,
             name: player.user,
             score: player.score,
             avatar: getAvatarForUser(player.user),
-            isCurrentUser: player.user === currentUsername
+            isCurrentUser: player.user === currentUsername,
           }));
-          
+
           setLeaderboardData(transformedData);
         });
       } else {
-        setLeaderboardError('Failed to fetch leaderboard data');
-        console.error('Leaderboard fetch error:', response.error);
+        setLeaderboardError("Failed to fetch leaderboard data");
+        console.error("Leaderboard fetch error:", response.error);
       }
     } catch (error) {
-      setLeaderboardError('Failed to fetch leaderboard data');
-      console.error('Unexpected error fetching leaderboard:', error);
+      setLeaderboardError("Failed to fetch leaderboard data");
+      console.error("Unexpected error fetching leaderboard:", error);
     } finally {
       setIsLoadingLeaderboard(false);
     }
@@ -389,9 +400,25 @@ const Dashboard = () => {
 
   const getAvatarForUser = (username) => {
     // Generate consistent avatar based on username
-    const avatars = ["🎓", "👑", "🐨", "🧠", "🧙‍♂️", "🥷", "🧠", "📚", "🦥", "🌱", "🎯", "⭐", "🔥", "💎", "🚀"];
-    const hash = username.split('').reduce((a, b) => {
-      a = ((a << 5) - a) + b.charCodeAt(0);
+    const avatars = [
+      "🎓",
+      "👑",
+      "🐨",
+      "🧠",
+      "🧙‍♂️",
+      "🥷",
+      "🧠",
+      "📚",
+      "🦥",
+      "🌱",
+      "🎯",
+      "⭐",
+      "🔥",
+      "💎",
+      "🚀",
+    ];
+    const hash = username.split("").reduce((a, b) => {
+      a = (a << 5) - a + b.charCodeAt(0);
       return a & a;
     }, 0);
     return avatars[Math.abs(hash) % avatars.length];
@@ -422,7 +449,7 @@ const Dashboard = () => {
 
       const prompt = `Generate a set of educational flashcards based on the following topic or description: "${aiPrompt}"
 
-Please create 5-8 flashcards that would be useful for studying this topic. Each flashcard should have:
+Please create exactly ${aiFlashcardCount} flashcards that would be useful for studying this topic. Each flashcard should have:
 - A clear, concise question on the front
 - A detailed, accurate answer on the back
 - The category should be: "${aiCategory || "AI Generated"}"
@@ -533,6 +560,13 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
     setFlashcardLimit(newLimit);
     chrome.storage.sync.set({ flashcardLimit: newLimit }, () => {
       console.log("Flashcard limit updated:", newLimit);
+    });
+  };
+
+  const updateAiFlashcardCount = (newCount) => {
+    setAiFlashcardCount(newCount);
+    chrome.storage.sync.set({ aiFlashcardCount: newCount }, () => {
+      console.log("AI flashcard count updated:", newCount);
     });
   };
 
@@ -827,6 +861,86 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                           className="form-input"
                         />
                       </div>
+                      <div className="form-group">
+                        <label>Number of Flashcards to Generate:</label>
+                        <div className="count-selector">
+                          <button
+                            onClick={() =>
+                              updateAiFlashcardCount(
+                                Math.max(
+                                  1,
+                                  (typeof aiFlashcardCount === "number"
+                                    ? aiFlashcardCount
+                                    : 1) - 1
+                                )
+                              )
+                            }
+                            className="count-btn"
+                            disabled={
+                              typeof aiFlashcardCount === "number"
+                                ? aiFlashcardCount <= 1
+                                : true
+                            }
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            value={
+                              isAiCountFocused && aiFlashcardCount === ""
+                                ? ""
+                                : aiFlashcardCount
+                            }
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value === "") {
+                                setAiFlashcardCount("");
+                              } else {
+                                const numValue = parseInt(value);
+                                if (!isNaN(numValue)) {
+                                  updateAiFlashcardCount(
+                                    Math.max(1, Math.min(20, numValue))
+                                  );
+                                }
+                              }
+                            }}
+                            onFocus={() => setIsAiCountFocused(true)}
+                            onBlur={(e) => {
+                              setIsAiCountFocused(false);
+                              const value = e.target.value;
+                              if (value === "" || isNaN(parseInt(value))) {
+                                updateAiFlashcardCount(1);
+                              }
+                            }}
+                            className="count-input"
+                            min="1"
+                            max="20"
+                          />
+                          <button
+                            onClick={() =>
+                              updateAiFlashcardCount(
+                                Math.min(
+                                  20,
+                                  (typeof aiFlashcardCount === "number"
+                                    ? aiFlashcardCount
+                                    : 1) + 1
+                                )
+                              )
+                            }
+                            className="count-btn"
+                            disabled={
+                              typeof aiFlashcardCount === "number"
+                                ? aiFlashcardCount >= 20
+                                : true
+                            }
+                          >
+                            +
+                          </button>
+                        </div>
+                        <p className="setting-description">
+                          Choose how many flashcards to generate (1-20).
+                        </p>
+                      </div>
                       <button
                         onClick={generateAIFlashcards}
                         className="ai-generate-btn"
@@ -849,23 +963,81 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                     <label>Flashcards Required Before Continue:</label>
                     <div className="limit-selector">
                       <button
-                        onClick={() => updateFlashcardLimit(Math.max(1, flashcardLimit - 1))}
+                        onClick={() =>
+                          updateFlashcardLimit(
+                            Math.max(
+                              1,
+                              (typeof flashcardLimit === "number"
+                                ? flashcardLimit
+                                : 1) - 1
+                            )
+                          )
+                        }
                         className="limit-btn"
-                        disabled={flashcardLimit <= 1}
+                        disabled={
+                          typeof flashcardLimit === "number"
+                            ? flashcardLimit <= 1
+                            : true
+                        }
                       >
                         −
                       </button>
-                      <span className="limit-value">{flashcardLimit}</span>
+                      <input
+                        type="number"
+                        value={
+                          isLimitFocused && flashcardLimit === ""
+                            ? ""
+                            : flashcardLimit
+                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setFlashcardLimit("");
+                          } else {
+                            const numValue = parseInt(value);
+                            if (!isNaN(numValue)) {
+                              updateFlashcardLimit(
+                                Math.max(1, Math.min(20, numValue))
+                              );
+                            }
+                          }
+                        }}
+                        onFocus={() => setIsLimitFocused(true)}
+                        onBlur={(e) => {
+                          setIsLimitFocused(false);
+                          const value = e.target.value;
+                          if (value === "" || isNaN(parseInt(value))) {
+                            updateFlashcardLimit(1);
+                          }
+                        }}
+                        className="limit-input"
+                        min="1"
+                        max="20"
+                      />
                       <button
-                        onClick={() => updateFlashcardLimit(Math.min(20, flashcardLimit + 1))}
+                        onClick={() =>
+                          updateFlashcardLimit(
+                            Math.min(
+                              20,
+                              (typeof flashcardLimit === "number"
+                                ? flashcardLimit
+                                : 1) + 1
+                            )
+                          )
+                        }
                         className="limit-btn"
-                        disabled={flashcardLimit >= 20}
+                        disabled={
+                          typeof flashcardLimit === "number"
+                            ? flashcardLimit >= 20
+                            : true
+                        }
                       >
                         +
                       </button>
                     </div>
                     <p className="setting-description">
-                      Set how many flashcards you need to get correct before you can continue to the blocked site.
+                      Set how many flashcards you need to get correct before you
+                      can continue to the blocked site.
                     </p>
                   </div>
                 </div>
@@ -955,55 +1127,54 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
           </div>
         )}
 
-        {
-          activeTab === "leaderboard" && (
-              <div className="leaderboard-section"> 
-              <div className="section-header">
-                <h2>🏆 Koala Kudos Leaderboard</h2>
-                <button 
-                  onClick={fetchLeaderboard} 
-                  className="refresh-btn"
-                  disabled={isLoadingLeaderboard}
-                >
-                  {isLoadingLeaderboard ? "🔄 Loading..." : "🔄 Refresh"}
-                </button>
-              </div>
-              
-              {isLoadingLeaderboard ? (
-                <div className="loading-state">
-                  <div className="loading-spinner"></div>
-                  <p>Loading leaderboard...</p>
-                </div>
-              ) : leaderboardError ? (
-                <div className="error-state">
-                  <p>❌ {leaderboardError}</p>
-                  <button onClick={fetchLeaderboard} className="retry-btn">
-                    Try Again
-                  </button>
-                </div>
-              ) : leaderboardData.length === 0 ? (
-                <div className="empty-state">
-                  <p>📊 No players yet. Be the first to earn Koala Kudos!</p>
-                </div>
-              ) : (
-                <div className="leaderboard-list">
-                  {leaderboardData.map((player) => (
-                    <div 
-                      key={player.rank} 
-                      className={`leaderboard-item ${player.isCurrentUser ? 'current-user' : ''}`}
-                    >
-                      <div className="rank">#{player.rank}</div>
-                      <div className="avatar">{player.avatar}</div>
-                      <div className="name">{player.name}</div>
-                      <div className="score">{player.score}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
+        {activeTab === "leaderboard" && (
+          <div className="leaderboard-section">
+            <div className="section-header">
+              <h2>🏆 Koala Kudos Leaderboard</h2>
+              <button
+                onClick={fetchLeaderboard}
+                className="refresh-btn"
+                disabled={isLoadingLeaderboard}
+              >
+                {isLoadingLeaderboard ? "🔄 Loading..." : "🔄 Refresh"}
+              </button>
             </div>
 
-          )
-        }
+            {isLoadingLeaderboard ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Loading leaderboard...</p>
+              </div>
+            ) : leaderboardError ? (
+              <div className="error-state">
+                <p>❌ {leaderboardError}</p>
+                <button onClick={fetchLeaderboard} className="retry-btn">
+                  Try Again
+                </button>
+              </div>
+            ) : leaderboardData.length === 0 ? (
+              <div className="empty-state">
+                <p>📊 No players yet. Be the first to earn Koala Kudos!</p>
+              </div>
+            ) : (
+              <div className="leaderboard-list">
+                {leaderboardData.map((player) => (
+                  <div
+                    key={player.rank}
+                    className={`leaderboard-item ${
+                      player.isCurrentUser ? "current-user" : ""
+                    }`}
+                  >
+                    <div className="rank">#{player.rank}</div>
+                    <div className="avatar">{player.avatar}</div>
+                    <div className="name">{player.name}</div>
+                    <div className="score">{player.score}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* <div className="info-section">
           <h2>How It Works</h2>

@@ -102,6 +102,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: true });
       });
       return true;
+
+    case 'addBlockedSite':
+      // Add a single site to blocked sites list
+      chrome.storage.sync.get(['blockedSites', 'blockStats'], (result) => {
+        const blockedSites = result.blockedSites || [];
+        const blockStats = result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null };
+        
+        // Check if site is already blocked
+        if (blockedSites.includes(message.url)) {
+          sendResponse({ success: false, error: 'Site is already blocked' });
+          return;
+        }
+        
+        // Add the new site
+        const updatedSites = [...blockedSites, message.url];
+        const updatedStats = {
+          ...blockStats,
+          totalBlocked: blockStats.totalBlocked + 1,
+          todayBlocked: blockStats.todayBlocked + 1,
+          lastBlocked: new Date().toISOString()
+        };
+        
+        chrome.storage.sync.set({ 
+          blockedSites: updatedSites,
+          blockStats: updatedStats
+        }, () => {
+          setupWebRequestListener(); // Re-setup listener with new sites
+          sendResponse({ success: true });
+        });
+      });
+      return true;
       
     default:
       console.log('Unknown action:', message.action);

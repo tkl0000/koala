@@ -23,12 +23,16 @@ const Popup = () => {
   const [bannerType, setBannerType] = useState("error");
   const [confirmReset, setConfirmReset] = useState(false);
   const [username, setUsername] = useState("");
+  const [blockCurrentSiteUrl, setBlockCurrentSiteUrl] = useState("");
+  const [isBlockingSite, setIsBlockingSite] = useState(false);
 
   useEffect(() => {
     // Get current tab URL
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         setCurrentUrl(tabs[0].url);
+        // Auto-fill the block current site input with the current URL
+        setBlockCurrentSiteUrl(tabs[0].url);
       }
     });
 
@@ -111,13 +115,13 @@ const Popup = () => {
     });
 
     // Sync with Supabase leaderboard
-    chrome.storage.sync.get(['username'], async (result) => {
-      const username = result.username || 'Anonymous';
+    chrome.storage.sync.get(["username"], async (result) => {
+      const username = result.username || "Anonymous";
       const response = await updateLeaderboardScore(username, 0);
       if (response.success) {
-        console.log('Leaderboard reset successfully');
+        console.log("Leaderboard reset successfully");
       } else {
-        console.error('Failed to reset leaderboard:', response.error);
+        console.error("Failed to reset leaderboard:", response.error);
       }
     });
   };
@@ -178,6 +182,46 @@ const Popup = () => {
     setConfirmReset(false);
   };
 
+  const blockCurrentSite = () => {
+    if (!blockCurrentSiteUrl.trim()) {
+      setBannerMessage("Please enter a URL to block");
+      setBannerType("error");
+      return;
+    }
+
+    setIsBlockingSite(true);
+
+    // Send message to background script to add the site to blocked list
+    chrome.runtime.sendMessage(
+      {
+        action: "addBlockedSite",
+        url: blockCurrentSiteUrl.trim(),
+      },
+      (response) => {
+        setIsBlockingSite(false);
+
+        if (response && response.success) {
+          setBannerMessage(`Successfully blocked ${blockCurrentSiteUrl}`);
+          setBannerType("success");
+
+          // Update the blocked sites list
+          setBlockedSites((prev) => [...prev, blockCurrentSiteUrl.trim()]);
+
+          // Clear the input
+          setBlockCurrentSiteUrl("");
+
+          // Update current URL to empty to show it's been blocked
+          setCurrentUrl("");
+
+          setTimeout(() => setBannerMessage(null), 3000);
+        } else {
+          setBannerMessage(response?.error || "Failed to block site");
+          setBannerType("error");
+        }
+      }
+    );
+  };
+
   return (
     <div className="popup-container">
       {bannerMessage && (
@@ -188,7 +232,29 @@ const Popup = () => {
         />
       )}
       <div className="header">
-        <h1>🦥 Koala</h1>
+        <div className="header-left">
+          <h1>🦥 Koala</h1>
+          <div className="header-stats">
+            <div className="stat-item">
+              <span className="stat-label">Sites:</span>
+              <span className="stat-value">{blockedSites.length}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Blocks:</span>
+              <span className="stat-value">{blockStats.totalBlocked}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Kudos:</span>
+              <span
+                className={`stat-value ${
+                  score >= 0 ? "positive-score" : "negative-score"
+                }`}
+              >
+                {score}
+              </span>
+            </div>
+          </div>
+        </div>
         <button
           className="dark-mode-toggle"
           onClick={toggleDarkMode}
@@ -230,33 +296,32 @@ const Popup = () => {
               className="username-input"
               maxLength={20}
             />
-            <button onClick={saveUsername} className="btn btn-primary save-username-btn">
+            <button
+              onClick={saveUsername}
+              className="btn btn-primary save-username-btn"
+            >
               Save
             </button>
           </div>
         </div>
 
-        <div className="stats-section">
-          <h3>Stats</h3>
-          <div className="stats-grid">
-            <div className="stat-item">
-              <span className="stat-label">Sites Blocked:</span>
-              <span className="stat-value">{blockedSites.length}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Total Blocks:</span>
-              <span className="stat-value">{blockStats.totalBlocked}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-label">Koala Kudos:</span>
-              <span
-                className={`stat-value ${
-                  score >= 0 ? "positive-score" : "negative-score"
-                }`}
-              >
-                {score}
-              </span>
-            </div>
+        <div className="block-current-site-section">
+          <h3>Block Current Site</h3>
+          <div className="block-site-input-group">
+            <input
+              type="text"
+              value={blockCurrentSiteUrl}
+              onChange={(e) => setBlockCurrentSiteUrl(e.target.value)}
+              placeholder="Enter URL to block..."
+              className="block-site-input"
+            />
+            <button
+              onClick={blockCurrentSite}
+              className="btn btn-danger block-site-btn"
+              disabled={isBlockingSite || !blockCurrentSiteUrl.trim()}
+            >
+              {isBlockingSite ? "Blocking..." : "Block Site"}
+            </button>
           </div>
         </div>
 
@@ -291,14 +356,10 @@ const Popup = () => {
           </div>
         </div> */}
 
-
         <div className="actions">
           <button onClick={handleOpenOptions} className="btn btn-outline">
             Open Dashboard
           </button>
-          {/* <button onClick={resetScore} className="btn btn-danger">
-            Reset Points
-          </button> */}
         </div>
       </div>
     </div>
