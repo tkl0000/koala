@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { GoogleGenAI } from "@google/genai";
 import "./dashboard.css";
 
 const Dashboard = () => {
@@ -17,6 +18,11 @@ const Dashboard = () => {
   });
   const [isShaking, setIsShaking] = useState(false);
   const [score, setScore] = useState(0);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiCategory, setAiCategory] = useState("");
+  const [isAiSectionOpen, setIsAiSectionOpen] = useState(false);
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
     loadData();
@@ -293,6 +299,123 @@ const Dashboard = () => {
     });
   };
 
+  const generateAIFlashcards = async () => {
+    if (!aiPrompt.trim()) {
+      alert("Please enter a topic or description for the flashcards");
+      return;
+    }
+
+    if (!GEMINI_API_KEY) {
+      alert("Please set your GEMINI_API_KEY environment variable");
+      return;
+    }
+
+    setIsGenerating(true);
+
+    try {
+      // Initialize Google GenAI
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+      const prompt = `Generate a set of educational flashcards based on the following topic or description: "${aiPrompt}"
+
+Please create 5-8 flashcards that would be useful for studying this topic. Each flashcard should have:
+- A clear, concise question on the front
+- A detailed, accurate answer on the back
+- The category should be: "${aiCategory || "AI Generated"}"
+
+Format your response as a JSON array where each flashcard is an object with "front", "back", and "category" properties.
+
+Example format:
+[
+  {
+    "front": "What is photosynthesis?",
+    "back": "Photosynthesis is the process by which plants convert light energy into chemical energy, using carbon dioxide and water to produce glucose and oxygen.",
+    "category": "Biology"
+  },
+  {
+    "front": "What are the main stages of photosynthesis?",
+    "back": "The main stages are: 1) Light-dependent reactions (in thylakoids), 2) Light-independent reactions/Calvin cycle (in stroma).",
+    "category": "Biology"
+  }
+]
+
+Make sure the flashcards are educational, accurate, and cover different aspects of the topic.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      const generatedText = response.text;
+
+      // Try to extract JSON from the response
+      let generatedFlashcards = [];
+      try {
+        // Look for JSON array in the response
+        const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          generatedFlashcards = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error("No JSON array found in response");
+        }
+      } catch (parseError) {
+        console.error("Error parsing AI response:", parseError);
+        // Fallback: try to parse line by line
+        const lines = generatedText.split("\n").filter((line) => line.trim());
+        generatedFlashcards = lines
+          .map((line, index) => {
+            // Simple fallback parsing
+            const parts = line.split(" - ");
+            if (parts.length >= 2) {
+              return {
+                front: parts[0].replace(/^\d+\.\s*/, "").trim(),
+                back: parts[1].trim(),
+                category: aiCategory || "AI Generated",
+              };
+            }
+            return null;
+          })
+          .filter((card) => card !== null);
+      }
+
+      if (generatedFlashcards.length === 0) {
+        alert(
+          "No flashcards could be generated. Please try a different prompt."
+        );
+        return;
+      }
+
+      // Add unique IDs and merge with existing flashcards
+      const flashcardsWithIds = generatedFlashcards.map((card, index) => ({
+        id: Date.now() + index,
+        front: card.front,
+        back: card.back,
+        category: card.category || aiCategory || "AI Generated",
+      }));
+
+      const updatedFlashcards = [...flashcards, ...flashcardsWithIds];
+      setFlashcards(updatedFlashcards);
+
+      chrome.storage.sync.set({ flashcards: updatedFlashcards }, () => {
+        console.log(
+          `Successfully generated ${flashcardsWithIds.length} AI flashcards`
+        );
+        alert(`Successfully generated ${flashcardsWithIds.length} flashcards!`);
+      });
+
+      // Clear the prompt
+      setAiPrompt("");
+      setAiCategory("");
+    } catch (error) {
+      console.error("Error generating flashcards:", error);
+      alert(
+        "Error generating flashcards. Please check your API key and try again."
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -310,7 +433,11 @@ const Dashboard = () => {
             <span className="stat-label">Total Blocks</span>
           </div>
           <div className="stat-item">
-            <span className={`stat-number ${score >= 0 ? 'positive-score' : 'negative-score'}`}>
+            <span
+              className={`stat-number ${
+                score >= 0 ? "positive-score" : "negative-score"
+              }`}
+            >
               {score}
             </span>
             <span className="stat-label">Koala Kudos</span>
@@ -391,15 +518,39 @@ const Dashboard = () => {
           <div className="section-header">
             <h2>📚 Flashcards ({flashcards.length})</h2>
             <div className="section-actions">
-              <label className="action-btn secondary">
-                📥 Import CSV
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={importFlashcardsCSV}
-                  style={{ display: "none" }}
-                />
-              </label>
+              <div className="csv-import-container">
+                <label className="action-btn secondary">
+                  📥 Import CSV
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={importFlashcardsCSV}
+                    style={{ display: "none" }}
+                  />
+                </label>
+                <div className="tooltip">
+                  <span className="tooltip-icon">?</span>
+                  <div className="tooltip-content">
+                    <div className="tooltip-header">CSV Format</div>
+                    <div className="tooltip-body">
+                      <p>
+                        <strong>Format:</strong>{" "}
+                        <code>front,back,category</code>
+                      </p>
+                      <p>
+                        <strong>Example:</strong>
+                      </p>
+                      <code>
+                        "What is the capital of France?","Paris","Geography"
+                      </code>
+                      <p>
+                        Supports Quizlet exports and other CSV formats with
+                        question/answer pairs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <button onClick={resetScore} className="action-btn danger">
                 🔄 Reset Score
               </button>
@@ -408,22 +559,62 @@ const Dashboard = () => {
 
           <div className="add-flashcard-section">
             <h3>Add New Flashcard</h3>
-            <div className="csv-import-info">
-              <p>
-                <strong>CSV Import:</strong> Upload a CSV file with format:{" "}
-                <code>front,back,category</code>
-              </p>
-              <p>
-                Example:{" "}
-                <code>
-                  "What is the capital of France?","Paris","Geography"
-                </code>
-              </p>
-              <p>
-                Supports Quizlet exports and other CSV formats with
-                question/answer pairs.
-              </p>
+
+            {/* AI Generation Section */}
+            <div className="ai-generation-section">
+              <div
+                className="ai-section-header"
+                onClick={() => setIsAiSectionOpen(!isAiSectionOpen)}
+              >
+                <h4>🤖 AI Flashcard Generator</h4>
+                <span
+                  className={`dropdown-arrow ${isAiSectionOpen ? "open" : ""}`}
+                >
+                  ▼
+                </span>
+              </div>
+
+              {isAiSectionOpen && (
+                <div className="ai-section-content">
+                  <p className="ai-info">
+                    Describe any topic and let AI generate educational
+                    flashcards for you!
+                  </p>
+                  <div className="ai-form">
+                    <div className="form-group">
+                      <label>Topic or Description:</label>
+                      <textarea
+                        value={aiPrompt}
+                        onChange={(e) => setAiPrompt(e.target.value)}
+                        placeholder="e.g., 'Photosynthesis in plants', 'World War 2 history', 'JavaScript fundamentals', 'Spanish vocabulary for beginners'"
+                        className="form-textarea"
+                        rows="3"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Category (Optional):</label>
+                      <input
+                        type="text"
+                        value={aiCategory}
+                        onChange={(e) => setAiCategory(e.target.value)}
+                        placeholder="e.g., Biology, History, Programming"
+                        className="form-input"
+                      />
+                    </div>
+                    <button
+                      onClick={generateAIFlashcards}
+                      className="ai-generate-btn"
+                      disabled={isGenerating || !aiPrompt.trim()}
+                    >
+                      {isGenerating
+                        ? "🤖 Generating Flashcards..."
+                        : "🤖 Generate Flashcards"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div className="flashcard-form">
               <div className="form-group">
                 <label>Front (Question):</label>
