@@ -3,6 +3,13 @@ import { GoogleGenAI } from "@google/genai";
 import { useTheme } from "../hooks/useTheme";
 import "./custom-page.css";
 import Banner from "../components/Banner";
+import { 
+  calculateKoalaMood, 
+  getKoalaImage, 
+  getKoalaMessage, 
+  getKoalaMoodClass,
+  KOALA_MOODS 
+} from "../utils/koalaMood";
 
 const CustomPage = () => {
   const [originalUrl, setOriginalUrl] = useState("");
@@ -18,6 +25,11 @@ const CustomPage = () => {
     "answer-input-section"
   );
   const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalCorrect, setTotalCorrect] = useState(0);
+  const [totalAnswered, setTotalAnswered] = useState(0);
+  const [koalaMood, setKoalaMood] = useState(KOALA_MOODS.HAPPY);
   const [bannerMessage, setBannerMessage] = useState(null);
   const [bannerType, setBannerType] = useState("error");
   const { isDarkMode } = useTheme();
@@ -29,9 +41,10 @@ const CustomPage = () => {
     const original = urlParams.get("original") || "Unknown";
     setOriginalUrl(original);
 
-    // Load flashcard and score from storage
+    // Load flashcard and stats from storage
     loadFlashcard();
     loadScore();
+    loadStreakData();
     // Dark mode is now managed by the global theme manager
 
     // Update time every second
@@ -68,13 +81,68 @@ const CustomPage = () => {
     });
   };
 
+  const loadStreakData = () => {
+    chrome.storage.sync.get(["streak", "bestStreak", "totalCorrect", "totalAnswered"], (result) => {
+      setStreak(result.streak || 0);
+      setBestStreak(result.bestStreak || 0);
+      setTotalCorrect(result.totalCorrect || 0);
+      setTotalAnswered(result.totalAnswered || 0);
+      
+      // Calculate and set koala mood based on accuracy
+      const accuracy = result.totalAnswered > 0 ? (result.totalCorrect / result.totalAnswered) * 100 : 0;
+      const mood = calculateKoalaMood(accuracy);
+      setKoalaMood(mood);
+    });
+  };
+
   // Dark mode is now managed by the global theme manager
 
   const updateScore = (isCorrect) => {
     const newScore = isCorrect ? score + 1 : score - 1;
     setScore(newScore);
-    chrome.storage.sync.set({ score: newScore }, () => {
-      console.log("Score updated:", newScore);
+    
+    // Update streak and statistics
+    let newStreak = streak;
+    let newTotalCorrect = totalCorrect;
+    let newTotalAnswered = totalAnswered + 1;
+    let newBestStreak = bestStreak;
+    
+    if (isCorrect) {
+      newStreak = streak + 1;
+      newTotalCorrect = totalCorrect + 1;
+      if (newStreak > bestStreak) {
+        newBestStreak = newStreak;
+      }
+    } else {
+      newStreak = 0; // Reset streak on wrong answer
+    }
+    
+    // Update state
+    setStreak(newStreak);
+    setTotalCorrect(newTotalCorrect);
+    setTotalAnswered(newTotalAnswered);
+    setBestStreak(newBestStreak);
+    
+    // Update koala mood based on new accuracy
+    const newAccuracy = (newTotalCorrect / newTotalAnswered) * 100;
+    const newMood = calculateKoalaMood(newAccuracy);
+    setKoalaMood(newMood);
+    
+    // Save to storage
+    chrome.storage.sync.set({ 
+      score: newScore,
+      streak: newStreak,
+      bestStreak: newBestStreak,
+      totalCorrect: newTotalCorrect,
+      totalAnswered: newTotalAnswered
+    }, () => {
+      console.log("Stats updated:", { 
+        score: newScore, 
+        streak: newStreak, 
+        bestStreak: newBestStreak,
+        totalCorrect: newTotalCorrect,
+        totalAnswered: newTotalAnswered
+      });
     });
   };
 
@@ -228,14 +296,55 @@ Feedback: [Constructive feedback]`;
       )}
       <div className="custom-header">
         <h1>🐨 Koala Extension Intercepted!</h1>
-        {/* <p>This page was loaded by the Koala Chrome Extension</p> */}
         <p>Time for a study session twin</p>
-        {/* <div className="score-display">
-          <span className="score-label">Score:</span>
-          <span className={`score-value ${score >= 0 ? 'positive' : 'negative'}`}>
-            {score}
-          </span>
-        </div> */}
+        
+        {/* Koala Mood Display */}
+        <div className="koala-mood-section">
+          <div className="koala-mood-container">
+            <img 
+              src={getKoalaImage(koalaMood)} 
+              alt={`Koala is ${koalaMood}`}
+              className={`koala-mood-icon ${getKoalaMoodClass(koalaMood)}`}
+            />
+            <div className="koala-mood-info">
+              <p className="koala-message">
+                {getKoalaMessage(koalaMood, { 
+                  accuracy: totalAnswered > 0 ? (totalCorrect / totalAnswered) * 100 : 0,
+                  streak,
+                  bestStreak 
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Streak and Stats Display */}
+        <div className="stats-display">
+          <div className="stat-item">
+            <span className="stat-label">🔥 Streak:</span>
+            <span className={`stat-value streak ${streak > 0 ? 'positive' : 'neutral'}`}>
+              {streak}
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">🏆 Best:</span>
+            <span className="stat-value best-streak">
+              {bestStreak}
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">📊 Accuracy:</span>
+            <span className="stat-value accuracy">
+              {totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0}%
+            </span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Score:</span>
+            <span className={`stat-value score ${score >= 0 ? 'positive' : 'negative'}`}>
+              {score}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="custom-content">
