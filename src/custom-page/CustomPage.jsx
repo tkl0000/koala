@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { useTheme } from "../hooks/useTheme";
 import "./custom-page.css";
 import Banner from "../components/Banner";
+import { updateLeaderboardScore } from "../utils/supabase";
 import { 
   calculateKoalaMood, 
   getKoalaImage, 
@@ -143,6 +144,17 @@ const CustomPage = () => {
         totalCorrect: newTotalCorrect,
         totalAnswered: newTotalAnswered
       });
+    });
+
+    // Sync with Supabase leaderboard
+    chrome.storage.sync.get(['username'], async (result) => {
+      const username = result.username || 'Anonymous';
+      const response = await updateLeaderboardScore(username, newScore);
+      if (response.success) {
+        console.log('Leaderboard updated successfully');
+      } else {
+        console.error('Failed to update leaderboard:', response.error);
+      }
     });
   };
 

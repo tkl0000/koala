@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "../hooks/useTheme";
 import Banner from "../components/Banner";
+import { updateLeaderboardScore } from "../utils/supabase";
 
 const Popup = () => {
   const [count, setCount] = useState(0);
@@ -21,6 +22,7 @@ const Popup = () => {
   const [bannerMessage, setBannerMessage] = useState(null);
   const [bannerType, setBannerType] = useState("error");
   const [confirmReset, setConfirmReset] = useState(false);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     // Get current tab URL
@@ -61,6 +63,11 @@ const Popup = () => {
       setScore(result.score || 0);
     });
 
+    // Load username
+    chrome.storage.sync.get(["username"], (result) => {
+      setUsername(result.username || "");
+    });
+
     // Dark mode is now managed by the global theme manager
 
     // Load extension enabled state
@@ -86,12 +93,32 @@ const Popup = () => {
     chrome.runtime.openOptionsPage();
   };
 
+  const saveUsername = () => {
+    chrome.storage.sync.set({ username: username }, () => {
+      console.log("Username saved successfully");
+      setBannerMessage("Username saved successfully!");
+      setBannerType("success");
+      setTimeout(() => setBannerMessage(null), 2000);
+    });
+  };
+
   // Dark mode is now managed by the global theme manager
 
   const resetScore = () => {
     setScore(0);
     chrome.storage.sync.set({ score: 0 }, () => {
       console.log("Score reset successfully");
+    });
+
+    // Sync with Supabase leaderboard
+    chrome.storage.sync.get(['username'], async (result) => {
+      const username = result.username || 'Anonymous';
+      const response = await updateLeaderboardScore(username, 0);
+      if (response.success) {
+        console.log('Leaderboard reset successfully');
+      } else {
+        console.error('Failed to reset leaderboard:', response.error);
+      }
     });
   };
 
@@ -192,6 +219,23 @@ const Popup = () => {
           </label>
         </div>
 
+        <div className="username-section">
+          <h3>Username</h3>
+          <div className="username-input-group">
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username..."
+              className="username-input"
+              maxLength={20}
+            />
+            <button onClick={saveUsername} className="btn btn-primary save-username-btn">
+              Save
+            </button>
+          </div>
+        </div>
+
         <div className="stats-section">
           <h3>Stats</h3>
           <div className="stats-grid">
@@ -246,6 +290,7 @@ const Popup = () => {
             </div>
           </div>
         </div> */}
+
 
         <div className="actions">
           <button onClick={handleOpenOptions} className="btn btn-outline">

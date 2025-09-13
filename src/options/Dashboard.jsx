@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { useTheme } from "../hooks/useTheme";
 import "./dashboard.css";
 import Banner from "../components/Banner";
+import { updateLeaderboardScore, getLeaderboard } from "../utils/supabase";
 
 const Dashboard = () => {
   const [blockedSites, setBlockedSites] = useState([]);
@@ -20,7 +21,11 @@ const Dashboard = () => {
   });
   const [isShaking, setIsShaking] = useState(false);
   const [score, setScore] = useState(0);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [leaderboardData, setLeaderboardData] = useState([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiCategory, setAiCategory] = useState("");
   const [isAiSectionOpen, setIsAiSectionOpen] = useState(false);
@@ -33,6 +38,7 @@ const Dashboard = () => {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
+    fetchLeaderboard();
     loadData();
   }, []);
 
@@ -325,6 +331,68 @@ const Dashboard = () => {
     chrome.storage.sync.set({ score: 0 }, () => {
       console.log("Score reset successfully");
     });
+
+    // Sync with Supabase leaderboard
+    chrome.storage.sync.get(['username'], async (result) => {
+      const username = result.username || 'Anonymous';
+      const response = await updateLeaderboardScore(username, 0);
+      if (response.success) {
+        console.log('Leaderboard reset successfully');
+      } else {
+        console.error('Failed to reset leaderboard:', response.error);
+      }
+    });
+  };
+
+  const toggleLeaderboard = () => {
+    setShowLeaderboard(!showLeaderboard);
+    if (!showLeaderboard) {
+      fetchLeaderboard();
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    setIsLoadingLeaderboard(true);
+    setLeaderboardError(null);
+    
+    try {
+      const response = await getLeaderboard();
+      if (response.success) {
+        // Get current username to identify current user
+        chrome.storage.sync.get(['username'], (result) => {
+          const currentUsername = result.username || 'Anonymous';
+          
+          // Transform database data to include rank and avatar
+          const transformedData = response.data.map((player, index) => ({
+            rank: index + 1,
+            name: player.user,
+            score: player.score,
+            avatar: getAvatarForUser(player.user),
+            isCurrentUser: player.user === currentUsername
+          }));
+          
+          setLeaderboardData(transformedData);
+        });
+      } else {
+        setLeaderboardError('Failed to fetch leaderboard data');
+        console.error('Leaderboard fetch error:', response.error);
+      }
+    } catch (error) {
+      setLeaderboardError('Failed to fetch leaderboard data');
+      console.error('Unexpected error fetching leaderboard:', error);
+    } finally {
+      setIsLoadingLeaderboard(false);
+    }
+  };
+
+  const getAvatarForUser = (username) => {
+    // Generate consistent avatar based on username
+    const avatars = ["🎓", "👑", "🐨", "🧠", "🧙‍♂️", "🥷", "🧠", "📚", "🦥", "🌱", "🎯", "⭐", "🔥", "💎", "🚀"];
+    const hash = username.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0);
+      return a & a;
+    }, 0);
+    return avatars[Math.abs(hash) % avatars.length];
   };
 
   // Dark mode is now managed by the global theme manager
@@ -520,6 +588,12 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
           >
             📚 Flashcards ({flashcards.length})
           </button>
+          <button
+            className={`nav-tab ${activeTab === "leaderboard" ? "active" : ""}`}
+            onClick={() => setActiveTab("leaderboard")}
+          >
+            🏆️ Leaderboard
+          </button>
         </div>
       </nav>
 
@@ -692,6 +766,9 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                 <button onClick={resetScore} className="action-btn danger">
                   🔄 Reset Score
                 </button>
+                {/* <button onClick={toggleLeaderboard} className="action-btn primary">
+                  {showLeaderboard ? "🏆 Hide Leaderboard" : "🏆 Show Leaderboard"}
+                </button> */}
               </div>
             </div>
 
@@ -838,6 +915,56 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
             )}
           </div>
         )}
+
+        {
+          activeTab === "leaderboard" && (
+              <div className="leaderboard-section"> 
+              <div className="section-header">
+                <h2>🏆 Koala Kudos Leaderboard</h2>
+                <button 
+                  onClick={fetchLeaderboard} 
+                  className="refresh-btn"
+                  disabled={isLoadingLeaderboard}
+                >
+                  {isLoadingLeaderboard ? "🔄 Loading..." : "🔄 Refresh"}
+                </button>
+              </div>
+              
+              {isLoadingLeaderboard ? (
+                <div className="loading-state">
+                  <div className="loading-spinner"></div>
+                  <p>Loading leaderboard...</p>
+                </div>
+              ) : leaderboardError ? (
+                <div className="error-state">
+                  <p>❌ {leaderboardError}</p>
+                  <button onClick={fetchLeaderboard} className="retry-btn">
+                    Try Again
+                  </button>
+                </div>
+              ) : leaderboardData.length === 0 ? (
+                <div className="empty-state">
+                  <p>📊 No players yet. Be the first to earn Koala Kudos!</p>
+                </div>
+              ) : (
+                <div className="leaderboard-list">
+                  {leaderboardData.map((player) => (
+                    <div 
+                      key={player.rank} 
+                      className={`leaderboard-item ${player.isCurrentUser ? 'current-user' : ''}`}
+                    >
+                      <div className="rank">#{player.rank}</div>
+                      <div className="avatar">{player.avatar}</div>
+                      <div className="name">{player.name}</div>
+                      <div className="score">{player.score}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          )
+        }
 
         {/* <div className="info-section">
           <h2>How It Works</h2>
