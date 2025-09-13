@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [bannerMessage, setBannerMessage] = useState(null);
   const [bannerType, setBannerType] = useState("error");
   const [confirmClear, setConfirmClear] = useState(false);
+  const [flashcardLimit, setFlashcardLimit] = useState(3);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const Dashboard = () => {
   const loadData = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(
-      ["blockedSites", "blockStats", "flashcards", "score"],
+      ["blockedSites", "blockStats", "flashcards", "score", "flashcardLimit"],
       (result) => {
         setBlockedSites(result.blockedSites || []);
         setStats(
@@ -51,6 +52,7 @@ const Dashboard = () => {
         );
         setFlashcards(result.flashcards || []);
         setScore(result.score || 0);
+        setFlashcardLimit(result.flashcardLimit || 3);
       }
     );
   };
@@ -459,6 +461,13 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
     setBannerMessage(null);
   };
 
+  const updateFlashcardLimit = (newLimit) => {
+    setFlashcardLimit(newLimit);
+    chrome.storage.sync.set({ flashcardLimit: newLimit }, () => {
+      console.log("Flashcard limit updated:", newLimit);
+    });
+  };
+
   return (
     <div className="dashboard">
       {bannerMessage && (
@@ -753,6 +762,36 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Flashcard Settings Section */}
+              <div className="flashcard-settings-section">
+                <h4>⚙️ Study Settings</h4>
+                <div className="settings-form">
+                  <div className="form-group">
+                    <label>Flashcards Required Before Continue:</label>
+                    <div className="limit-selector">
+                      <button
+                        onClick={() => updateFlashcardLimit(Math.max(1, flashcardLimit - 1))}
+                        className="limit-btn"
+                        disabled={flashcardLimit <= 1}
+                      >
+                        −
+                      </button>
+                      <span className="limit-value">{flashcardLimit}</span>
+                      <button
+                        onClick={() => updateFlashcardLimit(Math.min(20, flashcardLimit + 1))}
+                        className="limit-btn"
+                        disabled={flashcardLimit >= 20}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <p className="setting-description">
+                      Set how many flashcards you need to get correct before you can continue to the blocked site.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="flashcard-form">
