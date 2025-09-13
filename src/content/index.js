@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import ContentScript from './ContentScript';
+import '../styles/tailwind.css';
 
 // Create a container for our React app
 const container = document.createElement('div');

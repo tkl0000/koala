@@ -5,6 +5,17 @@
   color: white;
   display: flex;
   flex-direction: column;
+  transition: background 0.5s ease-in-out;
+}
+
+/* Success background - Green gradient for passing grades */
+.custom-page.bg-success {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 50%, #16a34a 100%);
+}
+
+/* Failure background - Red gradient for failing grades */
+.custom-page.bg-failure {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
 }
 
 .custom-header {
@@ -286,6 +297,19 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: background 0.5s ease-in-out, border-color 0.5s ease-in-out;
+}
+
+/* Success background for answer section - Green */
+.answer-input-section.bg-success {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+/* Failure background for answer section - Red */
+.answer-input-section.bg-failure {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .answer-input-section h4 {

@@ -11,6 +11,7 @@ const CustomPage = () => {
   const [isGrading, setIsGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState(null);
   const [showAnswerInput, setShowAnswerInput] = useState(false);
+  const [allowContinue, setAllowContinue] = useState(false);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -128,6 +129,12 @@ Feedback: [Constructive feedback]`;
         fullResponse: generatedText
       });
 
+      const grade = gradeMatch ? gradeMatch[1].toUpperCase() : 'N/A';
+      if (grade === 'A' || grade === 'B' || grade === 'C') {
+        setAllowContinue(true);
+      } else {
+        setAllowContinue(false);
+      }
     } catch (error) {
       console.error('Error grading answer:', error);
       setGradeResult({
@@ -170,8 +177,9 @@ Feedback: [Constructive feedback]`;
   return (
     <div className="custom-page">
       <div className="custom-header">
-        <h1>🦥 Koala Extension Intercepted!</h1>
-        <p>This page was loaded by the Koala Chrome Extension</p>
+        <h1>🐨 Koala Extension Intercepted!</h1>
+        {/* <p>This page was loaded by the Koala Chrome Extension</p> */}
+        <p>Time for a study session twin</p>
       </div>
 
       <div className="custom-content">
@@ -194,18 +202,38 @@ Feedback: [Constructive feedback]`;
                 </div>
               </div>
               <div className="flashcard-controls">
-                <button onClick={handleFlip} className="flashcard-btn">
+                {/* <button onClick={handleFlip} className="flashcard-btn">
                   {isFlipped ? 'Show Front' : 'Show Back'}
-                </button>
-                <button onClick={handleShowAnswerInput} className="flashcard-btn secondary">
-                  Try Answer
-                </button>
-                <button onClick={handleNextCard} className="flashcard-btn secondary">
+                </button> */}
+                {/* <button onClick={handleNextCard} className="flashcard-btn secondary">
                   Next Card
-                </button>
+                </button> */}
+                {/* <button onClick={handleShowAnswerInput} className="flashcard-btn secondary">
+                  Try Answer
+                </button> */}
+                <div className="answer-input-section w-full flex flex-row">
+                  {/* <h4>Enter Your Answer:</h4> */}
+                  <textarea
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Type your answer here..."
+                    className="answer-input"
+                    rows="3"
+                  />
+                  <button 
+                    onClick={gradeAnswer} 
+                    className="grade-btn"
+                    disabled={isGrading}
+                  >
+                    {isGrading ? 'Grading...' : 'Check'}
+                  </button>
+                  <button onClick={resetCard} className="reset-btn">
+                    Reset
+                  </button>
+                </div>
               </div>
 
-              {showAnswerInput && (
+              {/* {showAnswerInput && (
                 <div className="answer-input-section">
                   <h4>Enter Your Answer:</h4>
                   <textarea
@@ -228,9 +256,9 @@ Feedback: [Constructive feedback]`;
                     </button>
                   </div>
                 </div>
-              )}
+              )} */}
 
-              {gradeResult && (
+              {/* {gradeResult && (
                 <div className="grade-result">
                   <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
                     Grade: {gradeResult.grade}
@@ -247,16 +275,18 @@ Feedback: [Constructive feedback]`;
                     Try Again
                   </button>
                 </div>
-              )}
+              )} */}
             </div>
           )}
         </div>
 
+        {allowContinue && (
         <div className="actions-card">
-          <h2>Quick Actions</h2>
+          {/* <h2>Quick Actions</h2> */}
           <div className="action-buttons">
             <button onClick={handleGoBack} className="action-btn primary">
-              Continue to Original Site
+              Continue
+              {/* {allowContinue ? 'Yes' : 'No'} */}
             </button>
             {/* <button onClick={handleGoToGoogle} className="action-btn secondary">
               🔍 Go to Google
@@ -264,8 +294,9 @@ Feedback: [Constructive feedback]`;
             <button onClick={handleGoToGitHub} className="action-btn secondary">
               🐙 Go to GitHub
             </button> */}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="custom-footer">

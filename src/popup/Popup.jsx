@@ -111,6 +111,10 @@ const Popup = () => {
     <div className="popup-container">
       <div className="header">
         <h1>🦥 Koala</h1>
+        {/* Tailwind Test Button */}
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+          Tailwind Test Button
+        </button>
       </div>
 
       <div className="content">
