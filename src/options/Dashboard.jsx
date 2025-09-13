@@ -16,7 +16,6 @@ const Dashboard = () => {
     back: '',
     category: ''
   });
-  const [geminiApiKey, setGeminiApiKey] = useState('');
 
   useEffect(() => {
     loadData();
@@ -24,14 +23,13 @@ const Dashboard = () => {
 
   const loadData = () => {
     // Load blocked sites and flashcards
-    chrome.storage.sync.get(['blockedSites', 'interceptConfig', 'blockStats', 'flashcards', 'geminiApiKey'], (result) => {
+    chrome.storage.sync.get(['blockedSites', 'interceptConfig', 'blockStats', 'flashcards'], (result) => {
       setBlockedSites(result.blockedSites || []);
       console.log(result.interceptConfig?.enabled);
       setIsEnabled(result.interceptConfig?.enabled ?? true);
       console.log(isEnabled);
       setStats(result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null });
       setFlashcards(result.flashcards || []);
-      setGeminiApiKey(result.geminiApiKey || '');
     });
   };
 
@@ -267,19 +265,12 @@ const Dashboard = () => {
     });
   };
 
-  const saveApiKey = () => {
-    chrome.storage.sync.set({ geminiApiKey: geminiApiKey }, () => {
-      console.log('API key saved successfully');
-      alert('API key saved successfully!');
-    });
-  };
-
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="header-content">
           <h1>🦥 Koala Extension Dashboard</h1>
-          <p>Manage your blocked websites and extension settings</p>
+          <p>Manage your blocked websites and flashcards</p>
         </div>
         <div className="header-stats">
           <div className="stat-item">
@@ -308,28 +299,6 @@ const Dashboard = () => {
                 {isEnabled ? 'Extension Active' : 'Extension Disabled'}
               </span>
             </label>
-          </div>
-
-          <div className="api-key-section">
-            <h3>🤖 Gemini AI Configuration</h3>
-            <div className="api-key-form">
-              <div className="form-group">
-                <label>Gemini API Key:</label>
-                <input
-                  type="password"
-                  value={geminiApiKey}
-                  onChange={(e) => setGeminiApiKey(e.target.value)}
-                  placeholder="Enter your Gemini API key for AI grading"
-                  className="form-input"
-                />
-                <p className="api-key-help">
-                  Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
-                </p>
-              </div>
-              <button onClick={saveApiKey} className="save-api-key-btn">
-                Save API Key
-              </button>
-            </div>
           </div>
 
           <div className="add-site-section">

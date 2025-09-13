@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './content.css';
 
 const ContentScript = () => {
-  const [isVisible, setIsVisible] = useState(false);
   const [pageInfo, setPageInfo] = useState({
     title: '',
     url: '',
@@ -22,19 +21,7 @@ const ContentScript = () => {
 
     setPageInfo({ title, url, wordCount });
 
-    // Listen for messages from popup
-    const handleMessage = (message, sender, sendResponse) => {
-      if (message.action === 'toggleContentScript') {
-        setIsVisible(!isVisible);
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(handleMessage);
-
-    return () => {
-      chrome.runtime.onMessage.removeListener(handleMessage);
-    };
-  }, [isVisible]);
+  }, []);
 
   const checkIfBlocked = () => {
     // Check if this is a bypass request
@@ -109,9 +96,6 @@ const ContentScript = () => {
     window.location.href = finalUrl;
   };
 
-  const handleClose = () => {
-    setIsVisible(false);
-  };
 
   const handleHighlight = () => {
     // Simple text highlighting functionality
@@ -141,20 +125,6 @@ const ContentScript = () => {
           <p>This site is in your blocked list.</p>
           <p>Redirecting to custom page...</p>
         </div>
-      </div>
-    );
-  }
-
-  if (!isVisible) {
-    return (
-      <div className="koala-toggle">
-        <button 
-          onClick={() => setIsVisible(true)}
-          className="toggle-btn"
-          title="Open Koala Extension"
-        >
-          🦥
-        </button>
       </div>
     );
   }

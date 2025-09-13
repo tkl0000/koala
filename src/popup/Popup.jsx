@@ -1,11 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 const Popup = () => {
   const [count, setCount] = useState(0);
-  const [currentUrl, setCurrentUrl] = useState('');
+  const [currentUrl, setCurrentUrl] = useState("");
   const [interceptConfig, setInterceptConfig] = useState({
-    targetWebsite: 'https://example.com',
-    enabled: true
+    targetWebsite: "https://example.com",
+    enabled: true,
+  });
+  const [blockedSites, setBlockedSites] = useState([]);
+  const [blockStats, setBlockStats] = useState({
+    totalBlocked: 0,
+    todayBlocked: 0,
+    lastBlocked: null,
   });
 
   useEffect(() => {
@@ -17,14 +23,28 @@ const Popup = () => {
     });
 
     // Load saved count from storage
-    chrome.storage.sync.get(['count'], (result) => {
+    chrome.storage.sync.get(["count"], (result) => {
       setCount(result.count || 0);
     });
 
     // Load interception configuration
-    chrome.runtime.sendMessage({ action: 'getInterceptConfig' }, (response) => {
+    chrome.runtime.sendMessage({ action: "getInterceptConfig" }, (response) => {
       if (response && response.config) {
         setInterceptConfig(response.config);
+      }
+    });
+
+    // Load blocked sites
+    chrome.runtime.sendMessage({ action: "getBlockedSites" }, (response) => {
+      if (response && response.sites) {
+        setBlockedSites(response.sites);
+      }
+    });
+
+    // Load block statistics
+    chrome.storage.sync.get(["blockStats"], (result) => {
+      if (result.blockStats) {
+        setBlockStats(result.blockStats);
       }
     });
   }, []);
@@ -47,35 +67,48 @@ const Popup = () => {
   const handleToggleIntercept = () => {
     const newConfig = { ...interceptConfig, enabled: !interceptConfig.enabled };
     setInterceptConfig(newConfig);
-    chrome.runtime.sendMessage({ 
-      action: 'updateInterceptConfig', 
-      config: newConfig 
+    chrome.runtime.sendMessage({
+      action: "updateInterceptConfig",
+      config: newConfig,
     });
   };
 
   const handleUpdateTargetWebsite = (e) => {
     const newConfig = { ...interceptConfig, targetWebsite: e.target.value };
     setInterceptConfig(newConfig);
-    chrome.runtime.sendMessage({ 
-      action: 'updateInterceptConfig', 
-      config: newConfig 
+    chrome.runtime.sendMessage({
+      action: "updateInterceptConfig",
+      config: newConfig,
     });
   };
-
 
   return (
     <div className="popup-container">
       <div className="header">
-        <h1>🦥 Koala Extension</h1>
+        <h1>🦥 Koala</h1>
       </div>
-      
+
       <div className="content">
         <div className="url-section">
           <h3>Current Page:</h3>
           <p className="url">{currentUrl}</p>
         </div>
 
-        <div className="intercept-section">
+        <div className="stats-section">
+          <h3>Stats</h3>
+          <div className="stats-grid">
+            <div className="stat-item">
+              <span className="stat-label">Sites Blocked:</span>
+              <span className="stat-value">{blockedSites.length}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">Total Blocks:</span>
+              <span className="stat-value">{blockStats.totalBlocked}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* <div className="intercept-section">
           <h3>URL Interception</h3>
           <div className="intercept-controls">
             <label className="toggle-label">
@@ -104,19 +137,7 @@ const Popup = () => {
               <p>When you visit the target website, you'll see a custom React page instead!</p>
             </div>
           </div>
-        </div>
-
-        <div className="counter-section">
-          <h3>Counter: {count}</h3>
-          <div className="buttons">
-            <button onClick={handleIncrement} className="btn btn-primary">
-              Increment
-            </button>
-            <button onClick={handleReset} className="btn btn-secondary">
-              Reset
-            </button>
-          </div>
-        </div>
+        </div> */}
 
         <div className="actions">
           <button onClick={handleOpenOptions} className="btn btn-outline">
