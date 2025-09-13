@@ -16,6 +16,7 @@
     "default_popup": "popup.html",
     "default_title": "Koala Extension"
   },
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },
@@ -27,7 +28,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "custom-page.html", "custom-page.js"],
+      "resources": ["assets/*", "custom-page.html", "custom-page.js", "options.html", "options.js"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -7,7 +7,8 @@ module.exports = {
     popup: './src/popup/index.js',
     content: './src/content/index.js',
     background: './src/background/index.js',
-    'custom-page': './src/custom-page/index.js'
+    'custom-page': './src/custom-page/index.js',
+    options: './src/options/index.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -48,6 +49,11 @@ module.exports = {
       template: './src/custom-page/custom-page.html',
       filename: 'custom-page.html',
       chunks: ['custom-page']
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/options/options.html',
+      filename: 'options.html',
+      chunks: ['options']
     })
   ],
   resolve: {

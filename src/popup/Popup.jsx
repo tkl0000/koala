@@ -120,7 +120,7 @@ const Popup = () => {
 
         <div className="actions">
           <button onClick={handleOpenOptions} className="btn btn-outline">
-            Options
+            Open Dashboard
           </button>
         </div>
       </div>

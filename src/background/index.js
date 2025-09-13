@@ -2,7 +2,6 @@
 
 // Configuration for URL interception
 const INTERCEPT_CONFIG = {
-  targetWebsite: 'https://example.com', // Change this to your target website
   enabled: true // Toggle to enable/disable interception
 };
 
@@ -17,7 +16,13 @@ chrome.runtime.onInstalled.addListener((details) => {
       theme: 'light',
       notifications: true
     },
-    interceptConfig: INTERCEPT_CONFIG
+    interceptConfig: INTERCEPT_CONFIG,
+    blockedSites: [],
+    blockStats: {
+      totalBlocked: 0,
+      todayBlocked: 0,
+      lastBlocked: null
+    }
   });
 
   // Set up web request listener
@@ -42,19 +47,40 @@ function setupWebRequestListener() {
 // Handle web requests and redirect if needed
 function handleWebRequest(details) {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(['interceptConfig'], (result) => {
+    chrome.storage.sync.get(['interceptConfig', 'blockedSites', 'blockStats'], (result) => {
       const config = result.interceptConfig || INTERCEPT_CONFIG;
+      const blockedSites = result.blockedSites || [];
+      const stats = result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null };
       
-      if (!config.enabled) {
+      if (!config.enabled || blockedSites.length === 0) {
         resolve({ cancel: false });
         return;
       }
 
-      const targetUrl = config.targetWebsite;
-      
-      // Check if the request is for our target website
-      if (details.url.includes(targetUrl) || details.url === targetUrl) {
-        console.log(`Intercepting request to: ${details.url}`);
+      // Check if the request is for any blocked website
+      const isBlocked = blockedSites.some(site => {
+        const siteUrl = site.url.toLowerCase();
+        const requestUrl = details.url.toLowerCase();
+        
+        // Remove protocol and www for comparison
+        const cleanSiteUrl = siteUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        const cleanRequestUrl = requestUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
+        
+        return cleanRequestUrl.includes(cleanSiteUrl) || cleanSiteUrl.includes(cleanRequestUrl.split('/')[0]);
+      });
+
+      if (isBlocked) {
+        console.log(`Intercepting request to blocked site: ${details.url}`);
+        
+        // Update block statistics
+        const today = new Date().toDateString();
+        const newStats = {
+          totalBlocked: stats.totalBlocked + 1,
+          todayBlocked: stats.lastBlocked === today ? stats.todayBlocked + 1 : 1,
+          lastBlocked: today
+        };
+        
+        chrome.storage.sync.set({ blockStats: newStats });
         
         // Get the extension's custom page URL
         const customPageUrl = chrome.runtime.getURL('custom-page.html');
@@ -128,6 +154,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Get current interception configuration
       chrome.storage.sync.get(['interceptConfig'], (result) => {
         sendResponse({ config: result.interceptConfig || INTERCEPT_CONFIG });
+      });
+      return true;
+
+    case 'getBlockedSites':
+      // Get blocked sites list
+      chrome.storage.sync.get(['blockedSites'], (result) => {
+        sendResponse({ sites: result.blockedSites || [] });
+      });
+      return true;
+
+    case 'updateBlockedSites':
+      // Update blocked sites list
+      chrome.storage.sync.set({ blockedSites: message.sites }, () => {
+        setupWebRequestListener(); // Re-setup listener with new sites
+        sendResponse({ success: true });
       });
       return true;
       
