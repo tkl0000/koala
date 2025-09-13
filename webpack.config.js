@@ -1,6 +1,8 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+require('dotenv').config();
 
 module.exports = {
   entry: {
@@ -34,6 +36,9 @@ module.exports = {
     ]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY)
+    }),
     new CopyPlugin({
       patterns: [
         { from: 'manifest.json', to: 'manifest.json' },

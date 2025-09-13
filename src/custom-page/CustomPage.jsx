@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
-
 import './custom-page.css';
 
 const CustomPage = () => {
@@ -12,6 +11,7 @@ const CustomPage = () => {
   const [isGrading, setIsGrading] = useState(false);
   const [gradeResult, setGradeResult] = useState(null);
   const [showAnswerInput, setShowAnswerInput] = useState(false);
+  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
     // Get the original URL from URL parameters
@@ -82,17 +82,18 @@ const CustomPage = () => {
     setIsGrading(true);
     
     try {
-      // Get API key from storage
-      const result = await chrome.storage.sync.get(['geminiApiKey']);
-      const apiKey = result.geminiApiKey;
+      // Use API key from environment variable
+      const apiKey = GEMINI_API_KEY;
+      // console.log('Key:', apiKey);
       
       if (!apiKey) {
-        alert('Please set your Gemini API key in the dashboard first');
+        alert('Please set your GEMINI_API_KEY environment variable');
         setIsGrading(false);
         return;
       }
 
-      const ai = new GoogleGenAI({});
+      // Initialize Google GenAI
+      const ai = new GoogleGenAI({apiKey: apiKey});
 
       const prompt = `You are a helpful tutor grading a student's answer. Please grade the following:
 
@@ -109,30 +110,10 @@ Format your response as:
 Grade: [A/B/C/D/F]
 Explanation: [Brief explanation]
 Feedback: [Constructive feedback]`;
-      // console.log('Key:', apiKey);
-      // console.log(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`);
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: "Explain how AI works in a few words",
+        contents: prompt
       });
-      console.log(response.text);
-      // const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     contents: [{
-      //       parts: [{
-      //         text: prompt
-      //       }]
-      //     }]
-      //   })
-      // });
-      // if (!response.ok) {
-      //   throw new Error(`API request failed: ${response.status}`);
-      // }
-      // const data = await response.json();
       const generatedText = response.text;
       
       // Parse the response

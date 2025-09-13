@@ -10,6 +10,9 @@ A modern Chrome extension built with React, featuring a popup interface and cont
 - 💾 **Data Persistence** - Counter and settings stored in Chrome storage
 - 🎨 **Responsive Design** - Works on all screen sizes
 - ⚡ **Fast Build** - Webpack-powered development and production builds
+- 🚫 **Website Blocker** - Block distracting websites and redirect to custom page
+- 📚 **Flashcard System** - Interactive flashcards with AI-powered grading
+- 🤖 **AI Grading** - Gemini AI integration for intelligent answer assessment
 
 ## Project Structure
 
@@ -52,12 +55,17 @@ cd koala
 npm install
 ```
 
-3. Build the extension:
+3. Set up environment variables:
+   - Create a `.env` file in the root directory
+   - Add your Gemini API key: `GEMINI_API_KEY=your_api_key_here`
+   - Get your free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+4. Build the extension:
 ```bash
 npm run build
 ```
 
-4. Load the extension in Chrome:
+5. Load the extension in Chrome:
    - Open Chrome and go to `chrome://extensions/`
    - Enable "Developer mode"
    - Click "Load unpacked" and select the `dist` folder
