@@ -13,6 +13,7 @@ const Popup = () => {
     todayBlocked: 0,
     lastBlocked: null,
   });
+  const [isEnabled, setIsEnabled] = useState(true);
 
   useEffect(() => {
     // Get current tab URL
@@ -47,6 +48,13 @@ const Popup = () => {
         setBlockStats(result.blockStats);
       }
     });
+
+    // Load extension enabled state
+    chrome.storage.sync.get(["interceptConfig"], (result) => {
+      if (result.interceptConfig) {
+        setIsEnabled(result.interceptConfig.enabled ?? true);
+      }
+    });
   }, []);
 
   const handleIncrement = () => {
@@ -62,6 +70,23 @@ const Popup = () => {
 
   const handleOpenOptions = () => {
     chrome.runtime.openOptionsPage();
+  };
+
+  const toggleExtension = () => {
+    const newEnabled = !isEnabled;
+    setIsEnabled(newEnabled);
+
+    chrome.storage.sync.set(
+      {
+        interceptConfig: {
+          enabled: newEnabled,
+          targetWebsite: interceptConfig.targetWebsite,
+        },
+      },
+      () => {
+        console.log("Extension toggled:", newEnabled);
+      }
+    );
   };
 
   const handleToggleIntercept = () => {
@@ -92,6 +117,21 @@ const Popup = () => {
         <div className="url-section">
           <h3>Current Page:</h3>
           <p className="url">{currentUrl}</p>
+        </div>
+
+        <div className="extension-toggle-section">
+          <label className="toggle-container">
+            <input
+              type="checkbox"
+              checked={isEnabled}
+              onChange={toggleExtension}
+              className="toggle-input"
+            />
+            <span className="toggle-slider"></span>
+            <span className="toggle-label">
+              {isEnabled ? "Extension Active" : "Extension Disabled"}
+            </span>
+          </label>
         </div>
 
         <div className="stats-section">
