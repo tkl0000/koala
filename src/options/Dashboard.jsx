@@ -25,6 +25,7 @@ const Dashboard = () => {
     // Load blocked sites and flashcards
     chrome.storage.sync.get(['blockedSites', 'interceptConfig', 'blockStats', 'flashcards'], (result) => {
       setBlockedSites(result.blockedSites || []);
+      console.log(result.interceptConfig?.enabled);
       setIsEnabled(result.interceptConfig?.enabled || true);
       setStats(result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null });
       setFlashcards(result.flashcards || []);
