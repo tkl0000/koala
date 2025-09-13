@@ -152,6 +152,8 @@ Feedback: [Constructive feedback]`;
       const explanationMatch = generatedText.match(/Explanation:\s*([^\n]+)/i);
       const feedbackMatch = generatedText.match(/Feedback:\s*([^\n]+)/i);
 
+      console.log(feedbackMatch)
+
       setGradeResult({
         grade: gradeMatch ? gradeMatch[1].toUpperCase() : "N/A",
         explanation: explanationMatch
@@ -312,15 +314,15 @@ Feedback: [Constructive feedback]`;
                 </div>
               )} */}
 
-              {/* {gradeResult && (
+              {(gradeResult && !allowContinue) && (
                 <div className="grade-result">
-                  <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
+                  {/* <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
                     Grade: {gradeResult.grade}
-                  </div>
+                  </div> */}
                   <div className="grade-details">
-                    <div className="grade-explanation">
+                    {/* <div className="grade-explanation">
                       <strong>Explanation:</strong> {gradeResult.explanation}
-                    </div>
+                    </div> */}
                     <div className="grade-feedback">
                       <strong>Feedback:</strong> {gradeResult.feedback}
                     </div>
@@ -329,7 +331,7 @@ Feedback: [Constructive feedback]`;
                     Try Again
                   </button>
                 </div>
-              )} */}
+              )}
             </div>
           )}
         </div>
