@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { GoogleGenAI } from "@google/genai";
 import "./dashboard.css";
+import Banner from "../components/Banner";
 
 const Dashboard = () => {
   const [blockedSites, setBlockedSites] = useState([]);
@@ -25,6 +26,9 @@ const Dashboard = () => {
   const [isSitesDropdownOpen, setIsSitesDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("blocked-sites");
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState(null);
+  const [bannerType, setBannerType] = useState('error');
+  const [confirmClear, setConfirmClear] = useState(false);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -72,9 +76,8 @@ const Dashboard = () => {
 
     // Basic URL validation
     if (!siteToAdd.includes(".") && !siteToAdd.startsWith("http")) {
-      alert(
-        "Please enter a valid website (e.g., facebook.com or https://facebook.com)"
-      );
+      setBannerMessage("Please enter a valid website (e.g., facebook.com or https://facebook.com)");
+      setBannerType('error');
       return;
     }
 
@@ -127,11 +130,18 @@ const Dashboard = () => {
   };
 
   const clearAllSites = () => {
-    if (window.confirm("Are you sure you want to clear all blocked sites?")) {
+    if (!confirmClear) {
+      setBannerMessage("Are you sure you want to clear all blocked sites? Click 'Clear All' again to confirm.");
+      setBannerType('warning');
+      setConfirmClear(true);
+    } else {
       setBlockedSites([]);
       chrome.storage.sync.set({ blockedSites: [] }, () => {
         console.log("All sites cleared");
       });
+      setBannerMessage("All blocked sites have been cleared.");
+      setBannerType('success');
+      setConfirmClear(false);
     }
   };
 
@@ -161,7 +171,8 @@ const Dashboard = () => {
           });
         }
       } catch (error) {
-        alert("Error importing sites. Please check the file format.");
+        setBannerMessage("Error importing sites. Please check the file format.");
+        setBannerType('error');
       }
     };
     reader.readAsText(file);
@@ -224,7 +235,8 @@ const Dashboard = () => {
 
     // Check file type
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      alert("Please select a CSV file.");
+      setBannerMessage("Please select a CSV file.");
+      setBannerType('error');
       return;
     }
 
@@ -235,9 +247,8 @@ const Dashboard = () => {
         const importedFlashcards = parseCSV(csvText);
 
         if (importedFlashcards.length === 0) {
-          alert(
-            "No valid flashcards found in the CSV file. Please check the format."
-          );
+          setBannerMessage("No valid flashcards found in the CSV file. Please check the format.");
+          setBannerType('error');
           return;
         }
 
@@ -249,16 +260,16 @@ const Dashboard = () => {
           console.log(
             `Successfully imported ${importedFlashcards.length} flashcards from CSV`
           );
-          alert(
-            `Successfully imported ${importedFlashcards.length} flashcards from CSV!`
-          );
+          setBannerMessage(`Successfully imported ${importedFlashcards.length} flashcards from CSV!`);
+          setBannerType('success');
         });
 
         // Reset file input
         event.target.value = "";
       } catch (error) {
         console.error("Error importing flashcards:", error);
-        alert("Error importing flashcards. Please check the CSV format.");
+        setBannerMessage("Error importing flashcards. Please check the CSV format.");
+        setBannerType('error');
       }
     };
 
@@ -267,7 +278,8 @@ const Dashboard = () => {
 
   const addFlashcard = () => {
     if (!newFlashcard.front.trim() || !newFlashcard.back.trim()) {
-      alert("Please fill in both front and back of the flashcard");
+      setBannerMessage("Please fill in both front and back of the flashcard");
+      setBannerType('error');
       return;
     }
 
@@ -313,12 +325,14 @@ const Dashboard = () => {
 
   const generateAIFlashcards = async () => {
     if (!aiPrompt.trim()) {
-      alert("Please enter a topic or description for the flashcards");
+      setBannerMessage("Please enter a topic or description for the flashcards");
+      setBannerType('error');
       return;
     }
 
     if (!GEMINI_API_KEY) {
-      alert("Please set your GEMINI_API_KEY environment variable");
+      setBannerMessage("Please set your GEMINI_API_KEY environment variable");
+      setBannerType('error');
       return;
     }
 
@@ -391,9 +405,8 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
       }
 
       if (generatedFlashcards.length === 0) {
-        alert(
-          "No flashcards could be generated. Please try a different prompt."
-        );
+        setBannerMessage("No flashcards could be generated. Please try a different prompt.");
+        setBannerType('error');
         return;
       }
 
@@ -412,7 +425,8 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
         console.log(
           `Successfully generated ${flashcardsWithIds.length} AI flashcards`
         );
-        alert(`Successfully generated ${flashcardsWithIds.length} flashcards!`);
+        setBannerMessage(`Successfully generated ${flashcardsWithIds.length} flashcards!`);
+        setBannerType('success');
       });
 
       // Clear the prompt
@@ -420,16 +434,26 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
       setAiCategory("");
     } catch (error) {
       console.error("Error generating flashcards:", error);
-      alert(
-        "Error generating flashcards. Please check your API key and try again."
-      );
+      setBannerMessage("Error generating flashcards. Please check your API key and try again.");
+      setBannerType('error');
     } finally {
       setIsGenerating(false);
     }
   };
 
+  const handleBannerClose = () => {
+    setBannerMessage(null);
+  };
+
   return (
     <div className={`dashboard ${isDarkMode ? "dark-mode" : ""}`}>
+      {bannerMessage && (
+        <Banner
+          message={bannerMessage}
+          type={bannerType}
+          onClose={handleBannerClose}
+        />
+      )}
       <header className="dashboard-header">
         <div className="header-content">
           <h1>🦥 Koala Extension Dashboard</h1>

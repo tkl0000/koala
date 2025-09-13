@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Banner from "../components/Banner";
 
 const Popup = () => {
   const [count, setCount] = useState(0);
@@ -15,6 +16,9 @@ const Popup = () => {
   });
   const [isEnabled, setIsEnabled] = useState(true);
   const [score, setScore] = useState(0);
+  const [bannerMessage, setBannerMessage] = useState(null);
+  const [bannerType, setBannerType] = useState('error');
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     // Get current tab URL
@@ -87,9 +91,16 @@ const Popup = () => {
 
   const toggleExtension = () => {
     if (isEnabled) {
-      if (!confirm("Are you sure? This will reset your Koala Kudos!")) return;
-      else {
+      if (!confirmReset) {
+        setBannerMessage("Are you sure? This will reset your Koala Kudos! Click the toggle again to confirm.");
+        setBannerType('warning');
+        setConfirmReset(true);
+        return;
+      } else {
         resetScore();
+        setBannerMessage("Koala Kudos have been reset.");
+        setBannerType('success');
+        setConfirmReset(false);
       }
     }
 
@@ -127,8 +138,20 @@ const Popup = () => {
     });
   };
 
+  const handleBannerClose = () => {
+    setBannerMessage(null);
+    setConfirmReset(false);
+  };
+
   return (
     <div className="popup-container">
+      {bannerMessage && (
+        <Banner
+          message={bannerMessage}
+          type={bannerType}
+          onClose={handleBannerClose}
+        />
+      )}
       <div className="header">
         <h1>🦥 Koala</h1>
         {/* Tailwind Test Button */}

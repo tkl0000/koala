@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import './custom-page.css';
+import Banner from '../components/Banner';
 
 const CustomPage = () => {
   const [originalUrl, setOriginalUrl] = useState('');
@@ -14,6 +15,8 @@ const CustomPage = () => {
   const [allowContinue, setAllowContinue] = useState(false);
   const [answerSectionClass, setAnswerSectionClass] = useState('answer-input-section');
   const [score, setScore] = useState(0);
+  const [bannerMessage, setBannerMessage] = useState(null);
+  const [bannerType, setBannerType] = useState('error');
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -94,7 +97,8 @@ const CustomPage = () => {
 
   const gradeAnswer = async () => {
     if (!userAnswer.trim()) {
-      alert('Please enter an answer before grading');
+      setBannerMessage('Please enter an answer before grading');
+      setBannerType('error');
       return;
     }
 
@@ -106,7 +110,8 @@ const CustomPage = () => {
       // console.log('Key:', apiKey);
       
       if (!apiKey) {
-        alert('Please set your GEMINI_API_KEY environment variable');
+        setBannerMessage('Please set your GEMINI_API_KEY environment variable');
+        setBannerType('error');
         setIsGrading(false);
         return;
       }
@@ -197,8 +202,19 @@ Feedback: [Constructive feedback]`;
     window.location.href = 'https://github.com';
   };
 
+  const handleBannerClose = () => {
+    setBannerMessage(null);
+  };
+
   return (
     <div className="custom-page">
+      {bannerMessage && (
+        <Banner
+          message={bannerMessage}
+          type={bannerType}
+          onClose={handleBannerClose}
+        />
+      )}
       <div className="custom-header">
         <h1>🐨 Koala Extension Intercepted!</h1>
         {/* <p>This page was loaded by the Koala Chrome Extension</p> */}
