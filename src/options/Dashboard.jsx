@@ -10,17 +10,24 @@ const Dashboard = () => {
     todayBlocked: 0,
     lastBlocked: null
   });
+  const [flashcards, setFlashcards] = useState([]);
+  const [newFlashcard, setNewFlashcard] = useState({
+    front: '',
+    back: '',
+    category: ''
+  });
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = () => {
-    // Load blocked sites
-    chrome.storage.sync.get(['blockedSites', 'interceptConfig', 'blockStats'], (result) => {
+    // Load blocked sites and flashcards
+    chrome.storage.sync.get(['blockedSites', 'interceptConfig', 'blockStats', 'flashcards'], (result) => {
       setBlockedSites(result.blockedSites || []);
       setIsEnabled(result.interceptConfig?.enabled || true);
       setStats(result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null });
+      setFlashcards(result.flashcards || []);
     });
   };
 
@@ -132,6 +139,37 @@ const Dashboard = () => {
     reader.readAsText(file);
   };
 
+  const addFlashcard = () => {
+    if (!newFlashcard.front.trim() || !newFlashcard.back.trim()) {
+      alert('Please fill in both front and back of the flashcard');
+      return;
+    }
+
+    const flashcardToAdd = {
+      id: Date.now(),
+      front: newFlashcard.front.trim(),
+      back: newFlashcard.back.trim(),
+      category: newFlashcard.category.trim() || 'General'
+    };
+
+    const updatedFlashcards = [...flashcards, flashcardToAdd];
+    setFlashcards(updatedFlashcards);
+    setNewFlashcard({ front: '', back: '', category: '' });
+
+    chrome.storage.sync.set({ flashcards: updatedFlashcards }, () => {
+      console.log('Flashcard added successfully');
+    });
+  };
+
+  const removeFlashcard = (id) => {
+    const updatedFlashcards = flashcards.filter(card => card.id !== id);
+    setFlashcards(updatedFlashcards);
+
+    chrome.storage.sync.set({ flashcards: updatedFlashcards }, () => {
+      console.log('Flashcard removed successfully');
+    });
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -240,6 +278,84 @@ const Dashboard = () => {
           )}
         </div>
 
+        <div className="flashcards-section">
+          <div className="section-header">
+            <h2>📚 Flashcards ({flashcards.length})</h2>
+          </div>
+
+          <div className="add-flashcard-section">
+            <h3>Add New Flashcard</h3>
+            <div className="flashcard-form">
+              <div className="form-group">
+                <label>Front (Question):</label>
+                <input
+                  type="text"
+                  value={newFlashcard.front}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, front: e.target.value})}
+                  placeholder="Enter the question or front text"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Back (Answer):</label>
+                <input
+                  type="text"
+                  value={newFlashcard.back}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, back: e.target.value})}
+                  placeholder="Enter the answer or back text"
+                  className="form-input"
+                />
+              </div>
+              <div className="form-group">
+                <label>Category (Optional):</label>
+                <input
+                  type="text"
+                  value={newFlashcard.category}
+                  onChange={(e) => setNewFlashcard({...newFlashcard, category: e.target.value})}
+                  placeholder="e.g., Math, Science, Language"
+                  className="form-input"
+                />
+              </div>
+              <button onClick={addFlashcard} className="add-flashcard-btn">
+                Add Flashcard
+              </button>
+            </div>
+          </div>
+
+          {flashcards.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">📚</div>
+              <h3>No flashcards yet</h3>
+              <p>Add flashcards above to see them when sites are blocked</p>
+            </div>
+          ) : (
+            <div className="flashcards-grid">
+              {flashcards.map((card) => (
+                <div key={card.id} className="flashcard-preview">
+                  <div className="flashcard-preview-content">
+                    <div className="flashcard-preview-front">
+                      <strong>Front:</strong> {card.front}
+                    </div>
+                    <div className="flashcard-preview-back">
+                      <strong>Back:</strong> {card.back}
+                    </div>
+                    <div className="flashcard-preview-category">
+                      Category: {card.category}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => removeFlashcard(card.id)}
+                    className="remove-flashcard-btn"
+                    title="Remove flashcard"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="info-section">
           <h2>How It Works</h2>
           <div className="info-cards">
@@ -249,14 +365,14 @@ const Dashboard = () => {
               <p>When you visit any of the blocked websites, you'll see a custom React page instead.</p>
             </div>
             <div className="info-card">
-              <div className="info-icon">⚡</div>
-              <h3>Instant Redirect</h3>
-              <p>The extension intercepts the request and immediately shows your custom page.</p>
+              <div className="info-icon">📚</div>
+              <h3>Flashcard Learning</h3>
+              <p>Study with flashcards while sites are blocked. Add your own cards above!</p>
             </div>
             <div className="info-card">
               <div className="info-icon">🔧</div>
               <h3>Easy Management</h3>
-              <p>Add, remove, and manage your blocked sites from this dashboard.</p>
+              <p>Add, remove, and manage your blocked sites and flashcards from this dashboard.</p>
             </div>
           </div>
         </div>

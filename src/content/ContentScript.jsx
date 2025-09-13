@@ -12,6 +12,7 @@ const ContentScript = () => {
 
   useEffect(() => {
     // Check if this page should be blocked
+    // console.log('Content script checking if page should be blocked');
     checkIfBlocked();
 
     // Get page information
@@ -36,6 +37,22 @@ const ContentScript = () => {
   }, [isVisible]);
 
   const checkIfBlocked = () => {
+    // Check if this is a bypass request
+    const urlParams = new URLSearchParams(window.location.search);
+    const isBypass = urlParams.get('koala_bypass') === 'true';
+
+    // console.log('Content script checking URL:', window.location.href);
+    // console.log('Bypass parameter:', isBypass);
+    
+    if (isBypass) {
+      console.log('✅ Content script: Bypass parameter detected, allowing page to load');
+      // Remove the bypass parameter from URL for cleaner experience
+      const url = new URL(window.location.href);
+      url.searchParams.delete('koala_bypass');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
     chrome.storage.sync.get(['interceptConfig', 'blockedSites'], (result) => {
       const config = result.interceptConfig || { enabled: true };
       const blockedSites = result.blockedSites || [];
