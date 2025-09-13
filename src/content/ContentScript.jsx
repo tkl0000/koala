@@ -40,6 +40,39 @@ const ContentScript = () => {
       return;
     }
 
+    // Check if site is in cooldown period
+    checkCooldownStatus();
+  };
+
+  const checkCooldownStatus = () => {
+    const currentUrl = window.location.href.toLowerCase();
+    const cleanCurrentUrl = currentUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    
+    chrome.storage.sync.get(['siteCooldowns'], (result) => {
+      const cooldowns = result.siteCooldowns || {};
+      const siteCooldown = cooldowns[cleanCurrentUrl];
+      
+      if (siteCooldown) {
+        const now = Date.now();
+        const cooldownDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+        
+        if (now - siteCooldown.timestamp < cooldownDuration) {
+          const remainingTime = Math.ceil((cooldownDuration - (now - siteCooldown.timestamp)) / 1000);
+          console.log(`✅ Content script: Site in cooldown, ${remainingTime}s remaining`);
+          return; // Allow access during cooldown
+        } else {
+          // Cooldown expired, remove it
+          delete cooldowns[cleanCurrentUrl];
+          chrome.storage.sync.set({ siteCooldowns: cooldowns });
+        }
+      }
+      
+      // If not in cooldown, proceed with normal blocking check
+      checkNormalBlocking();
+    });
+  };
+
+  const checkNormalBlocking = () => {
     chrome.storage.sync.get(['interceptConfig', 'blockedSites'], (result) => {
       const config = result.interceptConfig || { enabled: true };
       const blockedSites = result.blockedSites || [];

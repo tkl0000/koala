@@ -31,8 +31,11 @@ const CustomPage = () => {
   const [totalCorrect, setTotalCorrect] = useState(0);
   const [totalAnswered, setTotalAnswered] = useState(0);
   const [koalaMood, setKoalaMood] = useState(KOALA_MOODS.HAPPY);
+  const [flashcardLimit, setFlashcardLimit] = useState(3);
+  const [completedThisSession, setCompletedThisSession] = useState(0);
   const [bannerMessage, setBannerMessage] = useState(null);
   const [bannerType, setBannerType] = useState("error");
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const { isDarkMode } = useTheme();
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -46,6 +49,7 @@ const CustomPage = () => {
     loadFlashcard();
     loadScore();
     loadStreakData();
+    loadFlashcardLimit();
     // Dark mode is now managed by the global theme manager
 
     // Update time every second
@@ -96,6 +100,12 @@ const CustomPage = () => {
     });
   };
 
+  const loadFlashcardLimit = () => {
+    chrome.storage.sync.get(["flashcardLimit"], (result) => {
+      setFlashcardLimit(result.flashcardLimit || 3);
+    });
+  };
+
   // Dark mode is now managed by the global theme manager
 
   const updateScore = (isCorrect) => {
@@ -114,6 +124,12 @@ const CustomPage = () => {
       if (newStreak > bestStreak) {
         newBestStreak = newStreak;
       }
+      // Only increment completed flashcards for this session when answer is correct
+      setCompletedThisSession(prev => {
+        const newValue = prev + 1;
+        console.log(`Completed flashcards: ${newValue}/${flashcardLimit}`);
+        return newValue;
+      });
     } else {
       newStreak = 0; // Reset streak on wrong answer
     }
@@ -166,13 +182,22 @@ const CustomPage = () => {
     chrome.storage.sync.get(["flashcards"], (result) => {
       const flashcards = result.flashcards || [];
       if (flashcards.length > 0) {
-        const randomIndex = Math.floor(Math.random() * flashcards.length);
-        setFlashcard(flashcards[randomIndex]);
+        let randomIndex;
+        let newFlashcard;
+        
+        // Ensure we get a different flashcard (avoid showing the same one)
+        do {
+          randomIndex = Math.floor(Math.random() * flashcards.length);
+          newFlashcard = flashcards[randomIndex];
+        } while (flashcards.length > 1 && newFlashcard && newFlashcard.id === flashcard?.id);
+        
+        setFlashcard(newFlashcard);
         setIsFlipped(false); // Reset flip state for new card
         setUserAnswer(""); // Reset user answer
         setGradeResult(null); // Reset grade result
         setShowAnswerInput(false); // Reset answer input visibility
         setAnswerSectionClass("answer-input-section"); // Reset answer section background
+        setAllowContinue(false); // Reset continue button state
       }
     });
   };
@@ -248,6 +273,13 @@ Feedback: [Constructive feedback]`;
         setAllowContinue(true);
         setAnswerSectionClass("answer-input-section bg-success"); // Green for correct
         updateScore(true); // Increment score for correct answer
+        
+        // Show success message and auto-advance to next flashcard
+        setShowSuccessMessage(true);
+        setTimeout(() => {
+          setShowSuccessMessage(false);
+          handleNextCard();
+        }, 2000); // 2 second delay to show the success feedback
       } else {
         setAllowContinue(false);
         setAnswerSectionClass("answer-input-section bg-failure"); // Red for wrong
@@ -276,6 +308,9 @@ Feedback: [Constructive feedback]`;
 
   const handleGoBack = () => {
     if (originalUrl && originalUrl !== "Unknown") {
+      // Set cooldown for this site
+      setSiteCooldown(originalUrl);
+      
       // Add bypass parameter to prevent redirect loop
       const url = new URL(originalUrl);
       url.searchParams.set("koala_bypass", "true");
@@ -283,6 +318,22 @@ Feedback: [Constructive feedback]`;
     } else {
       window.history.back();
     }
+  };
+
+  const setSiteCooldown = (siteUrl) => {
+    const cleanUrl = siteUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    
+    chrome.storage.sync.get(['siteCooldowns'], (result) => {
+      const cooldowns = result.siteCooldowns || {};
+      cooldowns[cleanUrl] = {
+        timestamp: Date.now(),
+        originalUrl: siteUrl
+      };
+      
+      chrome.storage.sync.set({ siteCooldowns: cooldowns }, () => {
+        console.log(`🕐 Cooldown set for ${cleanUrl} - 5 minutes`);
+      });
+    });
   };
 
   const handleGoToGoogle = () => {
@@ -357,6 +408,8 @@ Feedback: [Constructive feedback]`;
             </span>
           </div>
         </div>
+        
+        
       </div>
 
       <div className="custom-content">
@@ -408,6 +461,16 @@ Feedback: [Constructive feedback]`;
                     Reset
                   </button>
                 </div>
+                
+                {/* Success Message */}
+                {showSuccessMessage && (
+                  <div className="success-message">
+                    <div className="success-content">
+                      <span className="success-icon">✅</span>
+                      <span className="success-text">Great job! Moving to next flashcard...</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* {showAnswerInput && (
@@ -457,13 +520,36 @@ Feedback: [Constructive feedback]`;
           )}
         </div>
 
-        {allowContinue && (
+        {/* Progress Indicator */}
+        <div className="progress-section">
+          <div className="progress-info">
+            <span className="progress-label">📚 Session Progress:</span>
+            <span className="progress-text">
+              {completedThisSession} / {flashcardLimit} flashcards correct
+            </span>
+          </div>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${Math.min((completedThisSession / flashcardLimit) * 100, 100)}%` }}
+            ></div>
+          </div>
+          {completedThisSession < flashcardLimit && (
+            <p className="progress-message">
+              Get {flashcardLimit - completedThisSession} more flashcard{flashcardLimit - completedThisSession !== 1 ? 's' : ''} correct to continue
+            </p>
+          )}
+        </div>
+
+        {/* Debug: Log the values */}
+        {console.log(`Debug: completedThisSession=${completedThisSession}, flashcardLimit=${flashcardLimit}, shouldShowContinue=${completedThisSession >= flashcardLimit}`)}
+
+        {completedThisSession >= flashcardLimit && (
           <div className="actions-card">
             {/* <h2>Quick Actions</h2> */}
             <div className="action-buttons">
               <button onClick={handleGoBack} className="action-btn primary">
-                Continue
-                {/* {allowContinue ? 'Yes' : 'No'} */}
+                Continue to Site
               </button>
               {/* <button onClick={handleGoToGoogle} className="action-btn secondary">
               🔍 Go to Google
