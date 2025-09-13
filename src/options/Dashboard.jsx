@@ -39,6 +39,7 @@ const Dashboard = () => {
   const [aiFlashcardCount, setAiFlashcardCount] = useState(5);
   const [isAiCountFocused, setIsAiCountFocused] = useState(false);
   const [isLimitFocused, setIsLimitFocused] = useState(false);
+  const [cooldownDuration, setCooldownDuration] = useState(5); // Default 5 minutes
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -56,6 +57,7 @@ const Dashboard = () => {
         "score",
         "flashcardLimit",
         "aiFlashcardCount",
+        "cooldownDuration",
       ],
       (result) => {
         setBlockedSites(result.blockedSites || []);
@@ -70,6 +72,7 @@ const Dashboard = () => {
         setScore(result.score || 0);
         setFlashcardLimit(result.flashcardLimit || 3);
         setAiFlashcardCount(result.aiFlashcardCount || 5);
+        setCooldownDuration(result.cooldownDuration || 5);
       }
     );
   };
@@ -570,6 +573,13 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
     });
   };
 
+  const updateCooldownDuration = (newDuration) => {
+    setCooldownDuration(newDuration);
+    chrome.storage.sync.set({ cooldownDuration: newDuration }, () => {
+      console.log("Cooldown duration updated:", newDuration, "minutes");
+    });
+  };
+
   return (
     <div className="dashboard">
       {bannerMessage && (
@@ -765,6 +775,45 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                 )}
               </>
             )}
+
+            {/* Cooldown Duration Setting */}
+            <div className="cooldown-settings-section">
+              <h4>⏱️ Bypass Settings</h4>
+              <div className="settings-form">
+                <div className="form-group">
+                  <label>Bypass Cooldown Duration (minutes):</label>
+                  <div className="limit-selector">
+                    <button
+                      onClick={() =>
+                        updateCooldownDuration(
+                          Math.max(1, cooldownDuration - 1)
+                        )
+                      }
+                      className="limit-btn"
+                      disabled={cooldownDuration <= 1}
+                    >
+                      −
+                    </button>
+                    <span className="limit-value">{cooldownDuration}</span>
+                    <button
+                      onClick={() =>
+                        updateCooldownDuration(
+                          Math.min(60, cooldownDuration + 1)
+                        )
+                      }
+                      className="limit-btn"
+                      disabled={cooldownDuration >= 60}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <p className="setting-description">
+                    After completing flashcards, you can access the blocked site
+                    for this many minutes without doing more flashcards.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

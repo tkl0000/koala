@@ -48,17 +48,19 @@ const ContentScript = () => {
     const currentUrl = window.location.href.toLowerCase();
     const cleanCurrentUrl = currentUrl.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
     
-    chrome.storage.sync.get(['siteCooldowns'], (result) => {
+    chrome.storage.sync.get(['siteCooldowns', 'cooldownDuration'], (result) => {
       const cooldowns = result.siteCooldowns || {};
+      const configuredDuration = result.cooldownDuration || 5; // Default 5 minutes
       const siteCooldown = cooldowns[cleanCurrentUrl];
       
       if (siteCooldown) {
         const now = Date.now();
-        const cooldownDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+        const cooldownDuration = configuredDuration * 60 * 1000; // Convert minutes to milliseconds
         
         if (now - siteCooldown.timestamp < cooldownDuration) {
           const remainingTime = Math.ceil((cooldownDuration - (now - siteCooldown.timestamp)) / 1000);
-          console.log(`✅ Content script: Site in cooldown, ${remainingTime}s remaining`);
+          const remainingMinutes = Math.ceil(remainingTime / 60);
+          console.log(`✅ Content script: Site in cooldown, ${remainingMinutes}min remaining (${configuredDuration}min total)`);
           return; // Allow access during cooldown
         } else {
           // Cooldown expired, remove it
@@ -166,7 +168,7 @@ const ContentScript = () => {
     <></>
     // <div className="koala-content-script">
     //   <div className="koala-header">
-    //     <h3>🦥 Koala Extension</h3>
+    //     <h3>🐨 Koala Extension</h3>
     //     <button onClick={handleClose} className="close-btn">×</button>
     //   </div>
       

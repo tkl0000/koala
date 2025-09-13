@@ -233,7 +233,7 @@ const Popup = () => {
       )}
       <div className="header">
         <div className="header-left">
-          <h1>🦥 Koala</h1>
+          <h1>🐨 Koala</h1>
           <div className="header-stats">
             <div className="stat-item">
               <span className="stat-label">Sites:</span>

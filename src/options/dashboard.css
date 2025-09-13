@@ -1279,6 +1279,23 @@
   backdrop-filter: blur(10px);
 }
 
+/* Cooldown Settings Section */
+.cooldown-settings-section {
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.cooldown-settings-section h4 {
+  margin: 0 0 15px 0;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 .flashcard-settings-section h4 {
   margin: 0 0 15px 0;
   color: white;
