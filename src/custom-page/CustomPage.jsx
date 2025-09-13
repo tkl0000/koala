@@ -203,7 +203,7 @@ Student's Answer: "${userAnswer}"
 Please provide:
 1. A grade (A, B, C, D, or F)
 2. A brief explanation of why this grade was given
-3. Constructive feedback to help the student improve
+3. Constructive feedback to help the student improve; in your feedback, do not use any line breaks.
 
 Format your response as:
 Grade: [A/B/C/D/F]

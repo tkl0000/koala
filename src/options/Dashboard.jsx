@@ -470,7 +470,7 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
       )}
       <header className="dashboard-header">
         <div className="header-content">
-          <h1>🦥 Koala Extension Dashboard</h1>
+          <h1>🐨 Koala Extension Dashboard</h1>
           <p>Manage your blocked websites and flashcards</p>
         </div>
         <div className="header-controls">
