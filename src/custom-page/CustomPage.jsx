@@ -94,13 +94,13 @@ const CustomPage = () => {
                 <div className="flashcard-front">
                   <div className="flashcard-content">
                     <h3>{flashcard.front}</h3>
-                    <p className="flashcard-category">{flashcard.category}</p>
+                    {/* <p className="flashcard-category">{flashcard.category}</p> */}
                   </div>
                 </div>
                 <div className="flashcard-back">
                   <div className="flashcard-content">
                     <h3>{flashcard.back}</h3>
-                    <p className="flashcard-category">{flashcard.category}</p>
+                    {/* <p className="flashcard-category">{flashcard.category}</p> */}
                   </div>
                 </div>
               </div>

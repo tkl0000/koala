@@ -160,27 +160,28 @@ const ContentScript = () => {
   }
 
   return (
-    <div className="koala-content-script">
-      <div className="koala-header">
-        <h3>🦥 Koala Extension</h3>
-        <button onClick={handleClose} className="close-btn">×</button>
-      </div>
+    <></>
+    // <div className="koala-content-script">
+    //   <div className="koala-header">
+    //     <h3>🦥 Koala Extension</h3>
+    //     <button onClick={handleClose} className="close-btn">×</button>
+    //   </div>
       
-      <div className="koala-content">
-        <div className="page-info">
-          <h4>Page Information</h4>
-          <p><strong>Title:</strong> {pageInfo.title}</p>
-          <p><strong>URL:</strong> {pageInfo.url}</p>
-          <p><strong>Word Count:</strong> {pageInfo.wordCount}</p>
-        </div>
+    //   <div className="koala-content">
+    //     <div className="page-info">
+    //       <h4>Page Information</h4>
+    //       <p><strong>Title:</strong> {pageInfo.title}</p>
+    //       <p><strong>URL:</strong> {pageInfo.url}</p>
+    //       <p><strong>Word Count:</strong> {pageInfo.wordCount}</p>
+    //     </div>
 
-        <div className="actions">
-          <button onClick={handleHighlight} className="action-btn">
-            Highlight Selection
-          </button>
-        </div>
-      </div>
-    </div>
+    //     <div className="actions">
+    //       <button onClick={handleHighlight} className="action-btn">
+    //         Highlight Selection
+    //       </button>
+    //     </div>
+    //   </div>
+    // </div>
   );
 };
 
