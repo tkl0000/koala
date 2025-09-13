@@ -839,7 +839,7 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
           </div>
         )}
 
-        <div className="info-section">
+        {/* <div className="info-section">
           <h2>How It Works</h2>
           <div className="info-cards">
             <div className="info-card">
@@ -867,7 +867,7 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
