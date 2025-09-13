@@ -29,78 +29,9 @@ chrome.runtime.onInstalled.addListener((details) => {
   setupWebRequestListener();
 });
 
-// Function to set up web request listener
+// Function to set up web request listener (simplified for content script approach)
 function setupWebRequestListener() {
-  // Remove existing listener if any
-  if (chrome.webRequest.onBeforeRequest.hasListener(handleWebRequest)) {
-    chrome.webRequest.onBeforeRequest.removeListener(handleWebRequest);
-  }
-
-  // Add new listener
-  chrome.webRequest.onBeforeRequest.addListener(
-    handleWebRequest,
-    { urls: ["<all_urls>"] },
-    ["blocking"]
-  );
-}
-
-// Handle web requests and redirect if needed
-function handleWebRequest(details) {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(['interceptConfig', 'blockedSites', 'blockStats'], (result) => {
-      const config = result.interceptConfig || INTERCEPT_CONFIG;
-      const blockedSites = result.blockedSites || [];
-      const stats = result.blockStats || { totalBlocked: 0, todayBlocked: 0, lastBlocked: null };
-      
-      if (!config.enabled || blockedSites.length === 0) {
-        resolve({ cancel: false });
-        return;
-      }
-
-      // Check if the request is for any blocked website
-      const isBlocked = blockedSites.some(site => {
-        const siteUrl = site.url.toLowerCase();
-        const requestUrl = details.url.toLowerCase();
-        
-        // Remove protocol and www for comparison
-        const cleanSiteUrl = siteUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
-        const cleanRequestUrl = requestUrl.replace(/^https?:\/\//, '').replace(/^www\./, '');
-        
-        return cleanRequestUrl.includes(cleanSiteUrl) || cleanSiteUrl.includes(cleanRequestUrl.split('/')[0]);
-      });
-
-      if (isBlocked) {
-        console.log(`Intercepting request to blocked site: ${details.url}`);
-        
-        // Update block statistics
-        const today = new Date().toDateString();
-        const newStats = {
-          totalBlocked: stats.totalBlocked + 1,
-          todayBlocked: stats.lastBlocked === today ? stats.todayBlocked + 1 : 1,
-          lastBlocked: today
-        };
-        
-        chrome.storage.sync.set({ blockStats: newStats });
-        
-        // Get the extension's custom page URL
-        const customPageUrl = chrome.runtime.getURL('custom-page.html');
-        const finalUrl = `${customPageUrl}?original=${encodeURIComponent(details.url)}`;
-        
-        console.log(`Redirecting to custom React page: ${finalUrl}`);
-        
-        // Redirect the tab to our custom React page
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) {
-            chrome.tabs.update(tabs[0].id, { url: finalUrl });
-          }
-        });
-        
-        resolve({ cancel: true });
-      } else {
-        resolve({ cancel: false });
-      }
-    });
-  });
+  console.log('Background script: Content script will handle blocking');
 }
 
 // Handle messages from popup and content scripts
@@ -177,13 +108,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Handle tab updates
+// Handle tab updates (simplified - content script handles blocking)
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     console.log('Tab updated:', tab.url);
-    
-    // You can add logic here to inject content scripts on specific pages
-    // or perform other actions when pages load
+    // Content script will handle blocking logic
   }
 });
 

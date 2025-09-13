@@ -7,7 +7,7 @@
     "activeTab",
     "storage",
     "webRequest",
-    "webRequestBlocking"
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>"

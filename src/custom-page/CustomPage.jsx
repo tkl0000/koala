@@ -59,22 +59,8 @@ const CustomPage = () => {
           </div>
         </div>
 
-        <div className="actions-card">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-            <button onClick={handleGoBack} className="action-btn primary">
-              ← Go Back to Original
-            </button>
-            <button onClick={handleGoToGoogle} className="action-btn secondary">
-              🔍 Go to Google
-            </button>
-            <button onClick={handleGoToGitHub} className="action-btn secondary">
-              🐙 Go to GitHub
-            </button>
-          </div>
-        </div>
-
-        <div className="features-card">
+        
+        {/* <div className="features-card">
           <h2>Extension Features</h2>
           <ul className="features-list">
             <li>✅ URL Interception</li>
@@ -83,7 +69,7 @@ const CustomPage = () => {
             <li>✅ Quick Navigation</li>
             <li>✅ Beautiful UI</li>
           </ul>
-        </div>
+        </div> */}
       </div>
 
       <div className="custom-footer">
