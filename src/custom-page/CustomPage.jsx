@@ -228,7 +228,7 @@ Student's Answer: "${userAnswer}"
 Please provide:
 1. A grade (A, B, C, D, or F)
 2. A brief explanation of why this grade was given
-3. Constructive feedback to help the student improve
+3. Constructive feedback to help the student improve; in your feedback, do not use any line breaks, and format it in plain text so do not use any markdown or html tags.
 
 Format your response as:
 Grade: [A/B/C/D/F]
@@ -244,6 +244,8 @@ Feedback: [Constructive feedback]`;
       const gradeMatch = generatedText.match(/Grade:\s*([A-F])/i);
       const explanationMatch = generatedText.match(/Explanation:\s*([^\n]+)/i);
       const feedbackMatch = generatedText.match(/Feedback:\s*([^\n]+)/i);
+
+      console.log(feedbackMatch)
 
       setGradeResult({
         grade: gradeMatch ? gradeMatch[1].toUpperCase() : "N/A",
@@ -484,15 +486,15 @@ Feedback: [Constructive feedback]`;
                 </div>
               )} */}
 
-              {/* {gradeResult && (
+              {(gradeResult && !allowContinue) && (
                 <div className="grade-result">
-                  <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
+                  {/* <div className={`grade-badge grade-${gradeResult.grade.toLowerCase()}`}>
                     Grade: {gradeResult.grade}
-                  </div>
+                  </div> */}
                   <div className="grade-details">
-                    <div className="grade-explanation">
+                    {/* <div className="grade-explanation">
                       <strong>Explanation:</strong> {gradeResult.explanation}
-                    </div>
+                    </div> */}
                     <div className="grade-feedback">
                       <strong>Feedback:</strong> {gradeResult.feedback}
                     </div>
@@ -501,7 +503,7 @@ Feedback: [Constructive feedback]`;
                     Try Again
                   </button>
                 </div>
-              )} */}
+              )}
             </div>
           )}
         </div>
