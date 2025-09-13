@@ -1,35 +1,37 @@
+@import '../styles/shared.css';
+
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  transition: all 0.3s ease;
+  background: var(--primary-gradient);
+  font-family: var(--font-family);
+  transition: all var(--transition-normal);
 }
 
 .dashboard.dark-mode {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  background: var(--dark-gradient);
 }
 
 .dashboard-header {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--glass-bg);
   backdrop-filter: blur(10px);
-  padding: 20px 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: var(--spacing-xl) var(--spacing-3xl);
+  border-bottom: 1px solid var(--glass-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: var(--spacing-lg);
 }
 
 .dashboard.dark-mode .dashboard-header {
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--glass-dark-bg);
+  border-bottom: 1px solid var(--glass-dark-border);
 }
 
 .header-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--spacing-xl);
 }
 
 .header-content h1 {
@@ -70,11 +72,11 @@
 }
 
 .positive-score {
-  color: #22c55e !important;
+  color: var(--success-color) !important;
 }
 
 .negative-score {
-  color: #ef4444 !important;
+  color: var(--error-color) !important;
 }
 
 .dark-mode-toggle {
@@ -173,73 +175,7 @@
   margin: 0 auto;
 }
 
-.main-controls {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.extension-toggle {
-  margin-bottom: 30px;
-}
-
-.toggle-container {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.toggle-input {
-  display: none;
-}
-
-.toggle-slider {
-  position: relative;
-  width: 60px;
-  height: 30px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 30px;
-  transition: background 0.3s ease;
-}
-
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.toggle-input:checked + .toggle-slider {
-  background: #4CAF50;
-}
-
-.toggle-input:checked + .toggle-slider::before {
-  transform: translateX(30px);
-}
-
-.toggle-label {
-  color: white;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-.add-site-section h2 {
-  color: white;
-  margin: 0 0 15px 0;
-  font-size: 1.3rem;
-  font-weight: 600;
-}
+/* Removed unused styles: main-controls, extension-toggle, add-site-section */
 
 .add-site-form {
   display: flex;
@@ -331,18 +267,18 @@
 
 .action-btn {
   padding: 10px 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: var(--glass-bg);
   color: white;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-normal);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .action-btn:hover {
