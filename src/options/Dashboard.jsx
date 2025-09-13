@@ -22,6 +22,8 @@ const Dashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiCategory, setAiCategory] = useState("");
   const [isAiSectionOpen, setIsAiSectionOpen] = useState(false);
+  const [isSitesDropdownOpen, setIsSitesDropdownOpen] = useState(false);
+  const [selectedSites, setSelectedSites] = useState([]);
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
   useEffect(() => {
@@ -129,6 +131,32 @@ const Dashboard = () => {
         console.log("All sites cleared");
       });
     }
+  };
+
+  const toggleSitesDropdown = () => {
+    setIsSitesDropdownOpen(!isSitesDropdownOpen);
+  };
+
+  const toggleSiteSelection = (siteId) => {
+    setSelectedSites(prev => {
+      if (prev.includes(siteId)) {
+        return prev.filter(id => id !== siteId);
+      } else {
+        return [...prev, siteId];
+      }
+    });
+  };
+
+  const removeSelectedSites = () => {
+    if (selectedSites.length === 0) return;
+    
+    const updatedSites = blockedSites.filter(site => !selectedSites.includes(site.id));
+    setBlockedSites(updatedSites);
+    setSelectedSites([]);
+    
+    chrome.storage.sync.set({ blockedSites: updatedSites }, () => {
+      console.log(`${selectedSites.length} sites removed`);
+    });
   };
 
   const exportSites = () => {
@@ -488,7 +516,7 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
               <h3>No sites blocked yet</h3>
               <p>Add websites above to start blocking them</p>
             </div>
-          ) : (
+          ) : blockedSites.length <= 5 ? (
             <div className="sites-grid">
               {blockedSites.map((site) => (
                 <div key={site.id} className="site-card">
@@ -510,6 +538,73 @@ Make sure the flashcards are educational, accurate, and cover different aspects 
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="sites-dropdown-container">
+              <div className="sites-dropdown-header">
+                <div className="dropdown-summary">
+                  <span className="summary-text">
+                    Showing {blockedSites.length} blocked websites
+                  </span>
+                  {selectedSites.length > 0 && (
+                    <span className="selected-count">
+                      ({selectedSites.length} selected)
+                    </span>
+                  )}
+                </div>
+                <div className="dropdown-controls">
+                  {selectedSites.length > 0 && (
+                    <button
+                      onClick={removeSelectedSites}
+                      className="action-btn danger"
+                    >
+                      Remove Selected ({selectedSites.length})
+                    </button>
+                  )}
+                  <button
+                    onClick={toggleSitesDropdown}
+                    className="dropdown-toggle-btn"
+                  >
+                    {isSitesDropdownOpen ? "Hide Sites" : "Show Sites"}
+                    <span className={`dropdown-arrow ${isSitesDropdownOpen ? "open" : ""}`}>
+                      ▼
+                    </span>
+                  </button>
+                </div>
+              </div>
+              
+              {isSitesDropdownOpen && (
+                <div className="sites-dropdown-content">
+                  <div className="sites-dropdown-list">
+                    {blockedSites.map((site) => (
+                      <div key={site.id} className="site-dropdown-item">
+                        <label className="site-checkbox-label">
+                          <input
+                            type="checkbox"
+                            checked={selectedSites.includes(site.id)}
+                            onChange={() => toggleSiteSelection(site.id)}
+                            className="site-checkbox"
+                          />
+                          <div className="site-item-info">
+                            <div className="site-item-name">{site.name}</div>
+                            <div className="site-item-url">{site.url}</div>
+                            <div className="site-item-meta">
+                              Added: {new Date(site.addedDate).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </label>
+                        <button
+                          onClick={() => removeSite(site.id)}
+                          className="site-item-remove-btn"
+                          title="Remove site"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
