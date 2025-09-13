@@ -329,7 +329,7 @@ Feedback: [Constructive feedback]`;
       </div>
 
       <div className="custom-footer">
-        <p>Powered by Koala Chrome Extension 🦥</p>
+        <p>Powered by Koala</p>
       </div>
     </div>
   );

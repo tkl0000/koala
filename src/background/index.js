@@ -1,4 +1,4 @@
-// Background script for Koala Chrome Extension
+// Background script for Koala
 
 // Configuration for URL interception
 const INTERCEPT_CONFIG = {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Koala Chrome Extension",
+  "name": "Koala",
   "version": "1.0.0",
-  "description": "A Chrome extension built with React",
+  "description": "Take your studying to the next level with Koala, and turn distractions into opportunities.",
   "permissions": [
     "activeTab",
     "storage",
